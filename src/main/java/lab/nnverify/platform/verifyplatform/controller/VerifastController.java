@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
-public class Verifast {
+public class VerifastController {
 
     @RequestMapping("/verifast/mipverify")
     public void VerifastUseMIPVerify() {
