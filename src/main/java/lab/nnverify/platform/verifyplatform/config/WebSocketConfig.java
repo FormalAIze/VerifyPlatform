@@ -1,5 +1,6 @@
 package lab.nnverify.platform.verifyplatform.config;
 
+import lab.nnverify.platform.verifyplatform.socket.TerminalOutputHandler;
 import lab.nnverify.platform.verifyplatform.socket.TestHandler;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.WebSocketHandler;
@@ -13,7 +14,9 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry webSocketHandlerRegistry) {
-        webSocketHandlerRegistry.addHandler(getTestHandler(), "hello/{ID}")
+//        webSocketHandlerRegistry.addHandler(getTestHandler(), "hello/{ID}")
+//                .setAllowedOrigins("*");
+        webSocketHandlerRegistry.addHandler(new TerminalOutputHandler(), "terminal/{ID}")
                 .setAllowedOrigins("*");
     }
 

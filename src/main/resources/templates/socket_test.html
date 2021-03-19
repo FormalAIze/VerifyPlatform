@@ -6,7 +6,8 @@
 </head>
 <body>
 <input id="text" type="text"/>
-<button onclick="send()">Send</button>
+<button onclick="sendHello()">SendHello</button>
+<button onclick="sendReal()">SendReal</button>
 <button onclick="closeWebSocket()">Close</button>
 <div id="message">
 </div>
@@ -15,6 +16,8 @@
 
     var userID = "888";
     var websocket = null;
+    var url_production = "59.78.194.183:9090"
+    var url_test = "127.0.0.1:8080"
 
     $(function () {
         connectWebSocket();
@@ -26,7 +29,7 @@
         console.log("开始...");
 
         //建立webSocket连接
-        websocket = new WebSocket("ws://127.0.0.1:8080/hello/ID=" + userID);
+        websocket = new WebSocket("ws://" + url_production + "/terminal/ID=" + userID);
 
         //打开webSokcet连接时，回调该函数
         websocket.onopen = function () {
@@ -47,11 +50,17 @@
     }
 
     //发送消息
-    function send() {
+    function sendHello() {
         var postValue = {};
         postValue.id = userID;
         postValue.message = $("#text").val();
         websocket.send(JSON.stringify(postValue));
+    }
+
+    function sendReal() {
+        var postValue = {};
+        postValue.id = "1";
+        websocket.send(JSON.stringify(postValue))
     }
 
     //关闭连接

@@ -1,12 +1,15 @@
 package lab.nnverify.platform.verifyplatform.verifykit;
 
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class VerifastKit {
-    public static int testWithMIPVerify() {
+    public static int testWithMIPVerify(WebSocketSession session) {
         int runStatus = 1;
         ProcessBuilder processBuilder = new ProcessBuilder("./run_fnn1_validation.sh");
         processBuilder.directory(new File("/home/GuoXingWu/mipverify"));
@@ -17,10 +20,18 @@ public class VerifastKit {
             BufferedReader error = new BufferedReader(new InputStreamReader(process.getErrorStream()));
             String s;
             while ((s = input.readLine()) != null) {
-                System.out.println(s);
+                if (session != null) {
+                    session.sendMessage(new TextMessage(s));
+                } else {
+                    System.out.println(s);
+                }
             }
             while ((s = error.readLine()) != null) {
-                System.out.println(s);
+                if (session != null) {
+                    session.sendMessage(new TextMessage(s));
+                } else {
+                    System.out.println(s);
+                }
             }
             try {
                 runStatus = process.waitFor();

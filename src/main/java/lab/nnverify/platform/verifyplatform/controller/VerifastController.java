@@ -10,12 +10,11 @@ public class VerifastController {
 
     @RequestMapping("/verifast/mipverify")
     public void VerifastUseMIPVerify() {
-        VerifastKit.testWithMIPVerify();
+        VerifastKit.testWithMIPVerify(null);
     }
 
-    @ResponseBody
     @RequestMapping("/verifast/test")
     public String test() {
-        return "<h1>Hello world</h1>";
+        return "socket_test";
     }
 }
