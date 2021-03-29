@@ -20,6 +20,7 @@ public class SessionManager {
         Collection<WebSocketSession> values = sessionPool.values();
         values.remove(session);
         log.info("session removed from pool, uri: " + session.getUri());
+        log.info("current item count in pool: " + sessionPool.size());
     }
 
     public static WebSocketSession getSession(String id) {

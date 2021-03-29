@@ -9,8 +9,12 @@
 <button onclick="startTestMock()">StartMock</button>
 <button onclick="startTest()">StartTest</button>
 <button onclick="closeWebSocket()">Close</button>
+<div id="terminal"
+     style="width: 80%; height: 400px; margin: 20px auto;background: antiquewhite;overflow: auto; padding: 20px 10px">
+</div>
 <div id="message">
 </div>
+
 <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
 <script>
 
@@ -18,7 +22,7 @@
     var websocket = null;
     var url_production = "59.78.194.183:9090"
     var url_test = "localhost:9090"
-    var base_url = url_production
+    var base_url = url_test
 
     $(function () {
         connectWebSocket();
@@ -45,6 +49,7 @@
 
         //接收信息
         websocket.onmessage = function (msg) {
+            $("#terminal").append("<p>" + msg.data + "</p>")
             console.log(msg.data);
         }
 
