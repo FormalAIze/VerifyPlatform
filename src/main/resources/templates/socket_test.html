@@ -6,8 +6,8 @@
 </head>
 <body>
 <input id="text" type="text"/>
-<button onclick="sendHello()">SendHello</button>
-<button onclick="sendReal()">SendReal</button>
+<button onclick="startTestMock()">StartMock</button>
+<button onclick="startTest()">StartTest</button>
 <button onclick="closeWebSocket()">Close</button>
 <div id="message">
 </div>
@@ -17,7 +17,8 @@
     var userID = "888";
     var websocket = null;
     var url_production = "59.78.194.183:9090"
-    var url_test = "127.0.0.1:8080"
+    var url_test = "localhost:9090"
+    var base_url = url_production
 
     $(function () {
         connectWebSocket();
@@ -29,7 +30,7 @@
         console.log("开始...");
 
         //建立webSocket连接
-        websocket = new WebSocket("ws://" + url_production + "/terminal/ID=" + userID);
+        websocket = new WebSocket("ws://" + base_url + "/terminal?id=" + userID);
 
         //打开webSokcet连接时，回调该函数
         websocket.onopen = function () {
@@ -50,17 +51,16 @@
     }
 
     //发送消息
-    function sendHello() {
+    function startTestMock() {
         var postValue = {};
         postValue.id = userID;
-        postValue.message = $("#text").val();
-        websocket.send(JSON.stringify(postValue));
+        $.get("http://" + base_url + "/verifast/mipverifymock/" + userID)
     }
 
-    function sendReal() {
+    function startTest() {
         var postValue = {};
         postValue.id = "1";
-        websocket.send(JSON.stringify(postValue))
+        $.get("http://" + base_url + "/verifast/mipverify/" + userID)
     }
 
     //关闭连接
