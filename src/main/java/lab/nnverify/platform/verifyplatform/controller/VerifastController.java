@@ -19,7 +19,8 @@ public class VerifastController {
     @CrossOrigin(origins = "*")
     @RequestMapping("/verifast/mipverify/{userId}")
     public String verifastUseMIPVerify(@PathVariable String userId) {
-        int status = VerifastKit.testWithMIPVerify(userId);
+        VerifastKit verifastKit = new VerifastKit();
+        int status = verifastKit.testWithMIPVerify(userId);
         if (status > 0) {
             return "start running successfully";
         } else {
@@ -31,7 +32,8 @@ public class VerifastController {
     @CrossOrigin(origins = "*")
     @RequestMapping("/verifast/mipverifymock/{userId}")
     public String verifastUseMIPVerifyMock(@PathVariable String userId) {
-        int status = VerifastKit.testWithMIPVerifyMock(userId);
+        VerifastKit verifastKit = new VerifastKit();
+        int status = verifastKit.testWithMIPVerifyMock(userId);
         if (status > 0) {
             return "start running successfully";
         } else {

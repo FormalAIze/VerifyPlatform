@@ -13,13 +13,43 @@ import java.io.InputStreamReader;
 
 @Slf4j
 public class VerifastKit {
+    private WebSocketSession session = null;
+    private ResultManager resultManager = new VerifastResultManager();
+    private TaskExecuteListener taskExecuteListener = new TaskExecuteListener() {
+        @Override
+        public void beforeTaskExecute() {
+            log.info("-----beforeTaskExecute-----");
+        }
 
-    public static int testWithMIPVerifyMock(String userId) {
-        WebSocketSession session = SessionManager.getSession(userId);
+        @Override
+        public void afterTaskExecute() {
+            log.info("-----afterTaskExecute-----");
+            try {
+                sendResultFile();
+            } catch (IOException e) {
+                log.error("file io exception");
+                e.printStackTrace();
+            }
+        }
+    };
+
+    private void sendResultFile() throws IOException {
+        InputStreamReader file = resultManager.getResultFile();
+        BufferedReader reader = new BufferedReader(file);
+        String line;
+        while ((line = reader.readLine()) != null) {
+            session.sendMessage(new TextMessage("resultFile---" + line));
+        }
+    }
+
+    public int testWithMIPVerifyMock(String userId) {
+        session = SessionManager.getSession(userId);
         if (session == null) {
             return -500;
         }
+        taskExecuteListener.beforeTaskExecute();
         new Thread(() -> {
+            taskExecuteListener.beforeTaskExecute();
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
@@ -32,20 +62,25 @@ public class VerifastKit {
                     e.printStackTrace();
                 }
             }
+            taskExecuteListener.afterTaskExecute();
         }).start();
         return 1;
     }
 
-    public static int testWithMIPVerify(String userId) {
-        WebSocketSession session = SessionManager.getSession(userId);
+    public int testWithMIPVerify(String userId) {
+        session = SessionManager.getSession(userId);
         if (session == null) {
             return -500;
         }
-        new Thread(() -> task(session)).start();
+        new Thread(() -> {
+            taskExecuteListener.beforeTaskExecute();
+            task();
+            taskExecuteListener.afterTaskExecute();
+        }).start();
         return 1;
     }
 
-    private static void task(WebSocketSession session) {
+    private void task() {
         int runStatus = 1;
         ProcessBuilder processBuilder = new ProcessBuilder("./run_fnn1_validation.sh");
         processBuilder.directory(new File("/home/GuoXingWu/mipverify"));
