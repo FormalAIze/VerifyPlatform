@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h1>WiNR</h1>
+<input id="text" type="text"/>
+<div id="loading">请稍等</div>
+<button onclick="startTestMock()">StartMock</button>
+<button onclick="startTest()">StartTest</button>
+<!--<button onclick="closeWebSocket()">Close</button>-->
+<!--<div id="terminal"-->
+<!--     style="width: 80%; height: 400px; margin: 20px auto;background: antiquewhite;overflow: auto; padding: 20px 10px">-->
+<!--</div>-->
+<div id="result-content"></div>
+<div id="adv-image-area"></div>
+
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script>
+
+    var userID = "888";
+    var websocket = null;
+    // todo 部署时更换
+    var url_production = "219.228.60.24:9090"
+    var url_test = "localhost:9090"
+    var base_url = url_production
+
+    $(function () {
+        // connectWebSocket();
+    })
+
+    //建立WebSocket连接
+    function connectWebSocket() {
+
+        console.log("开始...");
+
+        //建立webSocket连接
+        websocket = new WebSocket("ws://" + base_url + "/terminal?id=" + userID);
+
+        //打开webSokcet连接时，回调该函数
+        websocket.onopen = function () {
+            console.log("onpen");
+        }
+
+        //关闭webSocket连接时，回调该函数
+        websocket.onclose = function () {
+            //关闭连接
+            console.log("onclose");
+        }
+
+        //接收信息
+        websocket.onmessage = function (msg) {
+            $("#terminal").append("<p>" + msg.data + "</p>")
+            console.log(msg.data);
+        }
+
+    }
+
+    //发送消息
+    function startTestMock() {
+        reset()
+        var postValue = {};
+        postValue.id = userID;
+        $("#loading").animate({opacity: "1"})
+        $.get("http://" + base_url + "/winr/mock/" + userID, function (data) {
+            $("#loading").animate({opacity: "0"});
+            var resultFile = data.resultFile.slice(-20).join("<br>")
+            // console.log(resultFile)
+            $("#result-content").html("<p>" + resultFile + "</p>");
+            for (var advExample of data.advExamples) {
+                var filename = "http://" + base_url + "/winr/adv_image/" + advExample
+                $("#adv-image-area").append("<img src=\"" + filename + "\"/>")
+            }
+            console.log("Load was performed.")
+        })
+    }
+
+    function startTest() {
+        reset()
+        var postValue = {};
+        postValue.id = userID;
+        $("#loading").animate({opacity: "1"})
+        $.get("http://" + base_url + "/winr/sync/" + userID, function (data) {
+            $("#loading").animate({opacity: "0"});
+            var resultFile = data.resultFile.slice(-20).join("<br>")
+            // console.log(resultFile)
+            $("#result-content").html("<p>" + resultFile + "</p>");
+            for (var advExample of data.advExamples) {
+                var filename = "http://" + base_url + "/winr/adv_image/" + advExample
+                $("#adv-image-area").append("<img src=\"" + filename + "\"/>")
+            }
+            console.log("Load was performed.")
+        })
+    }
+
+    //关闭连接
+    function closeWebSocket() {
+        if (websocket != null) {
+            websocket.close();
+        }
+    }
+
+    function reset() {
+        $("#result-content").empty()
+        $("#adv-image-area").empty()
+    }
+</script>
+<style type="text/css">
+    #loading {
+        z-index: 1;
+        text-align: center;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 90px;
+        margin: auto;
+        position: absolute;
+        height: 30px;
+        opacity: 0;
+    }
+
+    #result-content {
+        width: 80%;
+        height: 400px;
+        margin: 20px auto;
+        background: antiquewhite;
+        overflow: auto;
+        padding: 20px 10px
+    }
+
+    #adv-image-area {
+        width: 80%;
+        height: 400px;
+        margin: 20px auto;
+        border: 3px solid black;
+        overflow: auto;
+        padding: 20px 10px
+    }
+</style>
+</body>
+</html>

@@ -2,7 +2,6 @@ package lab.nnverify.platform.verifyplatform.socket;
 
 import com.alibaba.fastjson.JSONObject;
 import lab.nnverify.platform.verifyplatform.config.SessionManager;
-import lab.nnverify.platform.verifyplatform.verifykit.VerifastKit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;

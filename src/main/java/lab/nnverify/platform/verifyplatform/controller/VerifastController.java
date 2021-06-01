@@ -1,6 +1,6 @@
 package lab.nnverify.platform.verifyplatform.controller;
 
-import lab.nnverify.platform.verifyplatform.verifykit.VerifastKit;
+import lab.nnverify.platform.verifyplatform.verifykit.verifast.VerifastKit;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
