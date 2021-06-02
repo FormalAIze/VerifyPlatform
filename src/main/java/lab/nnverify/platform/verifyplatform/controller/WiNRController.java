@@ -2,26 +2,28 @@ package lab.nnverify.platform.verifyplatform.controller;
 
 import lab.nnverify.platform.verifyplatform.verifykit.verifast.VerifastKit;
 import lab.nnverify.platform.verifyplatform.verifykit.winr.WiNRKit;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Controller
 public class WiNRController {
     WiNRKit wiNRKit = new WiNRKit();
 
     @ResponseBody
     @CrossOrigin(origins = "*")
-    @RequestMapping("/winr/sync/{userId}")
-    public Map<String, Object> WiNRVerifySync(@PathVariable String userId) throws IOException {
+    @PostMapping("/winr/sync/{userId}")
+    public Map<String, Object> WiNRVerifySync(@PathVariable String userId, @RequestParam Map<String, Object> params) throws IOException {
         // todo verifyId还没想好怎么搞
+        for (String key : params.keySet()) {
+            log.info(key + ": " + params.get(key).toString());
+        }
         int verifyId = 1;
         int status = wiNRKit.testSync(userId);
         List<String> resultFile = wiNRKit.sendResultFileSync();
@@ -48,8 +50,11 @@ public class WiNRController {
 
     @ResponseBody
     @CrossOrigin(origins = "*")
-    @RequestMapping("/winr/mock/{userId}")
-    public Map<String, Object> WiNRVerifyMock(@PathVariable String userId) throws IOException {
+    @PostMapping("/winr/mock/{userId}")
+    public Map<String, Object> WiNRVerifyMock(@PathVariable String userId, @RequestParam Map<String, Object> params) throws IOException {
+        for (String key : params.keySet()) {
+            log.info(key + ": " + params.get(key).toString());
+        }
         int verifyId = 1;
         int status = wiNRKit.testMockSync(userId);
         List<String> resultFile = wiNRKit.sendResultFileSync();

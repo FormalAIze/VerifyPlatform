@@ -6,8 +6,27 @@
 </head>
 <body>
 <h1>WiNR</h1>
-<input id="text" type="text"/>
+网络模型:
+<select id="input-model" name="model">
+    <option value="model3">Model3</option>
+    <option value="models">ModelS</option>
+    <option value="modely">ModelY</option>
+</select><br>
+Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0"><br>
+数据集:
+<select id="input-dataset" name="dataset">
+    <option value="mnist">Mnist</option>
+    <option value="fashion_mnist">FashionOnMnist</option>
+    <option value="cifar10">Cifar10</option>
+    <option value="gtsrb">Gtsrb</option>
+</select><br>
+图片（可多选可不选）
+<input id="input-images" name="images" type="file" accept="image/png, image/jpeg, image/jpg" multiple>
+<button onclick="uploadImage()">上传图片</button>
+
 <div id="loading">请稍等</div>
+
+<button onclick="formTest()">FormTest</button>
 <button onclick="startTestMock()">StartMock</button>
 <button onclick="startTest()">StartTest</button>
 <!--<button onclick="closeWebSocket()">Close</button>-->
@@ -26,6 +45,8 @@
     var url_production = "219.228.60.24:9090"
     var url_test = "localhost:9090"
     var base_url = url_production
+
+    var imagesToBeVerify = []
 
     $(function () {
         // connectWebSocket();
@@ -58,13 +79,66 @@
 
     }
 
+    function formTest() {
+        const dataset = $("#input-dataset option:selected");
+        const epsilon = $("#input-epsilon");
+        const model = $("#input-model option:selected");
+        const images = $("#input-images").prop('files');
+
+        // console.log(dataset.val())
+        // console.log(epsilon.val())
+        // console.log(model.val())
+
+        var postForm = new FormData();
+        postForm.append("dataset", dataset.val())
+        postForm.append("epsilon", epsilon.val())
+        postForm.append("model", model.val())
+        for (let i = 0; i < images.length; i++) {
+            var image = images.item(i)
+            console.log(image.name)
+            postForm.append("images", image)
+        }
+    }
+
+    function uploadImage() {
+        var postForm = new FormData();
+        const images = $("#input-images").prop('files');
+        for (let i = 0; i < images.length; i++) {
+            var image = images.item(i)
+            postForm.append("images", image)
+        }
+        $.ajax({
+            url: 'http://' + base_url + '/winr/images',
+            type: 'post',
+            data: postForm,
+            processData: false,
+            contentType: false,
+            success: function (data) {
+                console.log(data)
+                imagesToBeVerify = data
+            }
+        })
+    }
+
     //发送消息
     function startTestMock() {
         reset()
-        var postValue = {};
-        postValue.id = userID;
+
+        const dataset = $("#input-dataset option:selected");
+        const epsilon = $("#input-epsilon");
+        const model = $("#input-model option:selected");
+
+        // console.log(dataset.val())
+        // console.log(epsilon.val())
+        // console.log(model.val())
+
         $("#loading").animate({opacity: "1"})
-        $.get("http://" + base_url + "/winr/mock/" + userID, function (data) {
+        $.post("http://" + base_url + "/winr/mock/" + userID, {
+            dataset: dataset.val(),
+            epsilon: epsilon.val(),
+            model: model.val(),
+            images: imagesToBeVerify
+        }, function (data) {
             $("#loading").animate({opacity: "0"});
             var resultFile = data.resultFile.slice(-20).join("<br>")
             // console.log(resultFile)
@@ -74,15 +148,23 @@
                 $("#adv-image-area").append("<img src=\"" + filename + "\"/>")
             }
             console.log("Load was performed.")
-        })
+        });
     }
 
     function startTest() {
         reset()
-        var postValue = {};
-        postValue.id = userID;
+
+        const dataset = $("#input-dataset option:selected");
+        const epsilon = $("#input-epsilon");
+        const model = $("#input-model option:selected");
+
         $("#loading").animate({opacity: "1"})
-        $.get("http://" + base_url + "/winr/sync/" + userID, function (data) {
+        $.post("http://" + base_url + "/winr/sync/" + userID, {
+            dataset: dataset.val(),
+            epsilon: epsilon.val(),
+            model: model.val(),
+            images: imagesToBeVerify
+        }, function (data) {
             $("#loading").animate({opacity: "0"});
             var resultFile = data.resultFile.slice(-20).join("<br>")
             // console.log(resultFile)
