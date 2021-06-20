@@ -26,7 +26,7 @@ public class VerifastResultManager extends ResultManager {
     }
 
     @Override
-    public List<String> getAdvExample(int verifyId) {
+    public List<String> getAdvExample(int verifyId, int image_num) {
         return null;
     }
 }

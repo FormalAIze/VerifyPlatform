@@ -1,5 +1,6 @@
 package lab.nnverify.platform.verifyplatform.controller;
 
+import lab.nnverify.platform.verifyplatform.verifykit.winr.WiNRConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -17,7 +18,7 @@ import java.util.UUID;
 @Slf4j
 @Controller
 public class ImageController {
-    private final String wiNRBasePath = "/home/GuoXingWu/WiNR_GXW/adv_examples/";
+    private final String wiNRBasePath = WiNRConfig.basicPath + "adv_examples/";
     @Value("${winr.file.upload.url}")
     private String uploadFilepathWiNR;
 

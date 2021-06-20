@@ -3,17 +3,14 @@ package lab.nnverify.platform.verifyplatform.verifykit.winr;
 import lab.nnverify.platform.verifyplatform.config.SessionManager;
 import lab.nnverify.platform.verifyplatform.verifykit.ResultManager;
 import lab.nnverify.platform.verifyplatform.verifykit.TaskExecuteListener;
-import lab.nnverify.platform.verifyplatform.verifykit.verifast.VerifastResultManager;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class WiNRKit {
@@ -48,10 +45,10 @@ public class WiNRKit {
         }
     }
 
-    public List<String> sendResultFileSync() throws IOException {
+    public Map<String, String> sendResultSync() throws IOException {
         InputStreamReader file = resultManager.getResultFile();
         if (file == null) {
-            return new ArrayList<>();
+            return new HashMap<>();
         }
         BufferedReader reader = new BufferedReader(file);
         String line;
@@ -59,11 +56,18 @@ public class WiNRKit {
         while ((line = reader.readLine()) != null) {
             result.add(line);
         }
-        return result;
+        String[] secondLastLine = result.get(result.size() - 2).split("\\s+");
+        String[] lastLine = result.get(result.size() - 1).split("\\s+");
+        HashMap<String, String> resultMap = new HashMap<>();
+        for (int i = 0; i < secondLastLine.length; i++) {
+            String key = secondLastLine[i];
+            resultMap.put(key, lastLine[i]);
+        }
+        return resultMap;
     }
 
-    public List<String> sendAdvExample(int verifyId) {
-        List<String> advExamples = resultManager.getAdvExample(verifyId);
+    public List<String> sendAdvExample(int verifyId, int image_num) {
+        List<String> advExamples = resultManager.getAdvExample(verifyId, image_num);
         return advExamples;
     }
 
@@ -83,7 +87,7 @@ public class WiNRKit {
 
     public int testMockSync(String userId) {
         try {
-            Thread.sleep(5000);
+            Thread.sleep(500);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -97,23 +101,49 @@ public class WiNRKit {
         }
         new Thread(() -> {
             taskExecuteListener.beforeTaskExecute();
-            task();
+            task(null);
             taskExecuteListener.afterTaskExecute();
         }).start();
         return 1;
     }
 
-    public int testSync(String userId) {
+    public int testSync(String userId, Map<String, Object> params) {
         taskExecuteListener.beforeTaskExecute();
-        task();
+        if (!paramsCheck(params)) {
+            return -1;
+        }
+        task(params);
         taskExecuteListener.afterTaskExecute();
         return 1;
     }
 
-    private void task() {
+    private boolean paramsCheck(Map<String, Object> params) {
+        return true;
+    }
+
+    private void task(Map<String, Object> params) {
         int runStatus = 1;
+        String dataset = (String) params.get("dataset");
+        String epsilon = (String) params.get("epsilon");
+        String model = (String) params.get("model");
+        String imageNum = (String) params.get("imageNum");
+
+        try {
+            PrintWriter printWriter = new PrintWriter(WiNRConfig.basicPath + "run.sh");
+            String command = String.format(
+                    "python main.py --netname %s --epsilon %s --dataset %s --num_image %s",
+                    model, epsilon, dataset, imageNum);
+            log.info("the command is " + command);
+            printWriter.write(command);
+            printWriter.flush();
+            printWriter.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            log.error("fail to write into run.sh");
+        }
+
         ProcessBuilder processBuilder = new ProcessBuilder("./run.sh");
-        processBuilder.directory(new File("/home/GuoXingWu/WiNR_GXW"));
+        processBuilder.directory(new File(WiNRConfig.basicPath));
         processBuilder.redirectErrorStream(true);
         try {
             Process process = processBuilder.start();

@@ -9,9 +9,7 @@ import java.util.List;
 
 @Slf4j
 public class WiNRResultManager extends ResultManager {
-    private final String basicPath = "/home/GuoXingWu/WiNR_GXW/";
-
-
+    private final String basicPath = WiNRConfig.basicPath;
 
     @Override
     public InputStreamReader getResultFile() {
@@ -24,6 +22,7 @@ public class WiNRResultManager extends ResultManager {
             Process process = processBuilder.start();
             BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
             BufferedReader error = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            // 使用最新生成的一个log文件
             filename = input.readLine();
             try {
                 int runStatus = process.waitFor();
@@ -47,7 +46,7 @@ public class WiNRResultManager extends ResultManager {
     }
 
     @Override
-    public List<String> getAdvExample(int verifyId) {
+    public List<String> getAdvExample(int verifyId, int image_num) {
         ProcessBuilder processBuilder = new ProcessBuilder("ls", "-at");
         processBuilder.directory(new File(basicPath + "adv_examples"));
         List<String> filenames = new ArrayList<>();
@@ -56,8 +55,10 @@ public class WiNRResultManager extends ResultManager {
             Process process = processBuilder.start();
             BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
             BufferedReader error = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-            // todo 目前不知道会有几张 暂时先返回一张吧
-            filenames.add(input.readLine());
+            String line;
+            for (int i = 0; i < image_num && ((line = input.readLine()) != null); i++) {
+                filenames.add(line);
+            }
             try {
                 int runStatus = process.waitFor();
                 System.out.println(runStatus);

@@ -8,21 +8,21 @@
 <h1>WiNR</h1>
 网络模型:
 <select id="input-model" name="model">
-    <option value="model3">Model3</option>
-    <option value="models">ModelS</option>
-    <option value="modely">ModelY</option>
+    <option value="models/cifar10_cnn_lenet_averpool_sigmoid_myself.h5">cifar10_cnn_lenet_averpool_sigmoid_myself</option>
+    <option value="models/fashion_mnist_cnn_4layer_5_3_sigmoid_myself.h5">fashion_mnist_cnn_4layer_5_3_sigmoid_myself</option>
+    <option value="models/fashion_mnist_cnn_6layer_5_3_sigmoid_myself.h5">fashion_mnist_cnn_6layer_5_3_sigmoid_myself</option>
+    <option value="models/fashion_mnist_cnn_8layer_5_3_sigmoid_myself.h5">fashion_mnist_cnn_8layer_5_3_sigmoid_myself</option>
+    <option value="models/fashion_mnist_cnn_10layer_5_3_sigmoid_myself.h5">fashion_mnist_cnn_10layer_5_3_sigmoid_myself</option>
+    <option value="models/gtsrb_cnn_5layer_sigmoid_myself.h5">gtsrb_cnn_5layer_sigmoid_myself</option>
 </select><br>
 Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0"><br>
 数据集:
 <select id="input-dataset" name="dataset">
-    <option value="mnist">Mnist</option>
-    <option value="fashion_mnist">FashionOnMnist</option>
-    <option value="cifar10">Cifar10</option>
-    <option value="gtsrb">Gtsrb</option>
+    <option value="fashion_mnist">fashion_mnist</option>
+    <option value="cifar10">cifar10</option>
+    <option value="gtsrb">gtsrb</option>
 </select><br>
-图片（可多选可不选）
-<input id="input-images" name="images" type="file" accept="image/png, image/jpeg, image/jpg" multiple>
-<button onclick="uploadImage()">上传图片</button>
+图片数量: <input id="input-image-num" type="text" name="epsilon" value="0"><br>
 
 <div id="loading">请稍等</div>
 
@@ -42,7 +42,7 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0"><br>
     var userID = "888";
     var websocket = null;
     // todo 部署时更换
-    var url_production = "219.228.60.24:9090"
+    var url_production = "219.228.60.69:9090"
     var url_test = "localhost:9090"
     var base_url = url_production
 
@@ -127,6 +127,7 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0"><br>
         const dataset = $("#input-dataset option:selected");
         const epsilon = $("#input-epsilon");
         const model = $("#input-model option:selected");
+        const imageNum = $("#input-image-num");
 
         // console.log(dataset.val())
         // console.log(epsilon.val())
@@ -137,15 +138,19 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0"><br>
             dataset: dataset.val(),
             epsilon: epsilon.val(),
             model: model.val(),
-            images: imagesToBeVerify
+            imageNum: imageNum.val()
         }, function (data) {
             $("#loading").animate({opacity: "0"});
-            var resultFile = data.resultFile.slice(-20).join("<br>")
-            // console.log(resultFile)
-            $("#result-content").html("<p>" + resultFile + "</p>");
+            var resultFile = data.resultFile
+            var resultFileString = ""
+            for (var key in resultFile) {
+                resultFileString += (key + ": " + resultFile[key] + "<br>")
+            }
+            console.log(resultFile)
+            $("#result-content").html("<p>" + resultFileString + "</p>");
             for (var advExample of data.advExamples) {
                 var filename = "http://" + base_url + "/winr/adv_image/" + advExample
-                $("#adv-image-area").append("<img src=\"" + filename + "\"/>")
+                $("#adv-image-area").append("<div><img src=\"" + filename + "\"/><p>" + advExample + "</p></div>")
             }
             console.log("Load was performed.")
         });
@@ -157,18 +162,23 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0"><br>
         const dataset = $("#input-dataset option:selected");
         const epsilon = $("#input-epsilon");
         const model = $("#input-model option:selected");
+        const imageNum = $("#input-image-num");
 
         $("#loading").animate({opacity: "1"})
         $.post("http://" + base_url + "/winr/sync/" + userID, {
             dataset: dataset.val(),
             epsilon: epsilon.val(),
             model: model.val(),
-            images: imagesToBeVerify
+            imageNum: imageNum.val()
         }, function (data) {
             $("#loading").animate({opacity: "0"});
-            var resultFile = data.resultFile.slice(-20).join("<br>")
-            // console.log(resultFile)
-            $("#result-content").html("<p>" + resultFile + "</p>");
+            var resultFile = data.resultFile
+            var resultFileString = ""
+            for (var key in resultFile) {
+                resultFileString += (key + ": " + resultFile[key] + "<br>")
+            }
+            console.log(resultFile)
+            $("#result-content").html("<p>" + resultFileString + "</p>");
             for (var advExample of data.advExamples) {
                 var filename = "http://" + base_url + "/winr/adv_image/" + advExample
                 $("#adv-image-area").append("<img src=\"" + filename + "\"/>")

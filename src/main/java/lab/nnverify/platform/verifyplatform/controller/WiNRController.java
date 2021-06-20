@@ -1,6 +1,5 @@
 package lab.nnverify.platform.verifyplatform.controller;
 
-import lab.nnverify.platform.verifyplatform.verifykit.verifast.VerifastKit;
 import lab.nnverify.platform.verifyplatform.verifykit.winr.WiNRKit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -16,6 +15,11 @@ import java.util.Map;
 public class WiNRController {
     WiNRKit wiNRKit = new WiNRKit();
 
+    @GetMapping("/winr/verify")
+    public String WiNRVerify() {
+        return "WiNR_test";
+    }
+
     @ResponseBody
     @CrossOrigin(origins = "*")
     @PostMapping("/winr/sync/{userId}")
@@ -25,8 +29,8 @@ public class WiNRController {
             log.info(key + ": " + params.get(key).toString());
         }
         int verifyId = 1;
-        int status = wiNRKit.testSync(userId);
-        List<String> resultFile = wiNRKit.sendResultFileSync();
+        int status = wiNRKit.testSync(userId, params);
+        Map<String, String> resultFile = wiNRKit.sendResultSync();
 
         HashMap<String, Object> result = new HashMap<>();
         result.put("verifyId", verifyId);
@@ -36,7 +40,8 @@ public class WiNRController {
         } else {
             result.put("status", "start running fail");
         }
-        List<String> advExamples = wiNRKit.sendAdvExample(verifyId);
+        int image_num = Integer.parseInt(resultFile.get("unrobust_number")) * 2;
+        List<String> advExamples = wiNRKit.sendAdvExample(verifyId, image_num);
         result.put("advExamples", advExamples);
         return result;
     }
@@ -45,7 +50,7 @@ public class WiNRController {
     @CrossOrigin(origins = "*")
     @RequestMapping("/winr/adv/{verifyId}")
     public List<String> getAdvExample(@PathVariable String verifyId) {
-        return wiNRKit.sendAdvExample(Integer.parseInt(verifyId));
+        return wiNRKit.sendAdvExample(Integer.parseInt(verifyId), 1);
     }
 
     @ResponseBody
@@ -57,7 +62,7 @@ public class WiNRController {
         }
         int verifyId = 1;
         int status = wiNRKit.testMockSync(userId);
-        List<String> resultFile = wiNRKit.sendResultFileSync();
+        Map<String, String> resultFile = wiNRKit.sendResultSync();
 
         HashMap<String, Object> result = new HashMap<>();
         result.put("verifyId", verifyId);
@@ -67,7 +72,8 @@ public class WiNRController {
         } else {
             result.put("status", "start running fail");
         }
-        List<String> advExamples = wiNRKit.sendAdvExample(verifyId);
+        int image_num = Integer.parseInt(resultFile.get("unrobust_number")) * 2;
+        List<String> advExamples = wiNRKit.sendAdvExample(verifyId, image_num);
         result.put("advExamples", advExamples);
         return result;
     }
