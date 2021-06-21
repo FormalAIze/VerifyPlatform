@@ -12,8 +12,7 @@ public class WiNRResultManager extends ResultManager {
     private final String basicPath = WiNRConfig.basicPath;
 
     @Override
-    public InputStreamReader getResultFile() {
-        // todo 目前直接使用最新产生的log文件 因为不知道文件名和执行命令的对应关系
+    public InputStreamReader getResultFile(String verifyId) {
         ProcessBuilder processBuilder = new ProcessBuilder("ls", "-at");
         processBuilder.directory(new File(basicPath + "logs"));
         String filename = null;
@@ -22,7 +21,13 @@ public class WiNRResultManager extends ResultManager {
             Process process = processBuilder.start();
             BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
             BufferedReader error = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-            // 使用最新生成的一个log文件
+            String s;
+            // 根据verifyId生成的锚点选择log文件
+            while ((s = input.readLine()) != null) {
+                if (s.equals("verify_" + verifyId)) {
+                    break;
+                }
+            }
             filename = input.readLine();
             try {
                 int runStatus = process.waitFor();
@@ -46,7 +51,7 @@ public class WiNRResultManager extends ResultManager {
     }
 
     @Override
-    public List<String> getAdvExample(int verifyId, int image_num) {
+    public List<String> getAdvExample(String verifyId, int image_num) {
         ProcessBuilder processBuilder = new ProcessBuilder("ls", "-at");
         processBuilder.directory(new File(basicPath + "adv_examples"));
         List<String> filenames = new ArrayList<>();
@@ -55,9 +60,17 @@ public class WiNRResultManager extends ResultManager {
             Process process = processBuilder.start();
             BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
             BufferedReader error = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            String s;
+            // 根据verifyId生成的锚点选择log文件
+            while ((s = input.readLine()) != null) {
+                if (s.equals("verify_" + verifyId)) {
+                    break;
+                }
+            }
             String line;
             for (int i = 0; i < image_num && ((line = input.readLine()) != null); i++) {
                 filenames.add(line);
+                log.info("adv example #" + i + " filename: " + line);
             }
             try {
                 int runStatus = process.waitFor();
@@ -73,5 +86,35 @@ public class WiNRResultManager extends ResultManager {
             log.info("image filename: " + filename);
         }
         return filenames;
+    }
+
+    public boolean createResultFileAnchor(String verifyId) {
+        String path = basicPath + "logs";
+        return createAnchor(path, verifyId);
+    }
+
+    public boolean createAdvExampleAnchor(String verifyId) {
+        String path = basicPath + "adv_examples";
+        return createAnchor(path, verifyId);
+    }
+
+    private boolean createAnchor(String path, String verifyId) {
+        int runStatus = 1;
+        ProcessBuilder processBuilder = new ProcessBuilder("touch", "verify_" + verifyId);
+        processBuilder.directory(new File(path));
+        processBuilder.redirectErrorStream(true);
+        try {
+            Process process = processBuilder.start();
+            try {
+                runStatus = process.waitFor();
+                log.info("create anchor run status: " + runStatus);
+                return runStatus == 0;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

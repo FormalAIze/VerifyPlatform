@@ -1,7 +1,6 @@
 package lab.nnverify.platform.verifyplatform.verifykit.winr;
 
 import lab.nnverify.platform.verifyplatform.config.SessionManager;
-import lab.nnverify.platform.verifyplatform.verifykit.ResultManager;
 import lab.nnverify.platform.verifyplatform.verifykit.TaskExecuteListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.socket.WebSocketSession;
@@ -14,17 +13,36 @@ import java.util.Map;
 
 @Slf4j
 public class WiNRKit {
+    public WiNRKit() {
+    }
+
+    public void setParams(Map<String, Object> params) {
+        this.params = params;
+    }
+
+    private Map<String, Object> params = null;
     private WebSocketSession session = null;
-    private ResultManager resultManager = new WiNRResultManager();
+    private WiNRResultManager wiNRResultManager = new WiNRResultManager();
+    private int asyncCheck = 0;
     private TaskExecuteListener taskExecuteListener = new TaskExecuteListener() {
         @Override
         public void beforeTaskExecute() {
             log.info("-----beforeWiNRTaskExecute-----");
+            asyncCheck++;
+            log.info("the async check value is: " + asyncCheck);
         }
 
         @Override
         public void afterTaskExecute() {
             log.info("-----afterWiNRTaskExecute-----");
+            // 创建一个锚点 方便之后通过verify_id查找文件
+            String verifyId = (String) params.getOrDefault("verifyId", "1");
+            if (!wiNRResultManager.createResultFileAnchor(verifyId)) {
+                log.error("anchor create failed: result file anchor create failed, verifyId is " + verifyId);
+            }
+            if (!wiNRResultManager.createAdvExampleAnchor(verifyId)) {
+                log.error("anchor create failed: advExample file anchor create failed, verifyId is " + verifyId);
+            }
 //            try {
 //                sendResultFile();
 //            } catch (IOException e) {
@@ -36,7 +54,7 @@ public class WiNRKit {
 
     // todo 异步的返回结果使用socket？
     private void sendResultFile() throws IOException {
-        InputStreamReader file = resultManager.getResultFile();
+        InputStreamReader file = wiNRResultManager.getResultFile("1");
         BufferedReader reader = new BufferedReader(file);
         String line;
         ArrayList<String> result = new ArrayList<>();
@@ -46,7 +64,8 @@ public class WiNRKit {
     }
 
     public Map<String, String> sendResultSync() throws IOException {
-        InputStreamReader file = resultManager.getResultFile();
+        String verifyId = (String) params.getOrDefault("verifyId", "1");
+        InputStreamReader file = wiNRResultManager.getResultFile(verifyId);
         if (file == null) {
             return new HashMap<>();
         }
@@ -66,8 +85,8 @@ public class WiNRKit {
         return resultMap;
     }
 
-    public List<String> sendAdvExample(int verifyId, int image_num) {
-        List<String> advExamples = resultManager.getAdvExample(verifyId, image_num);
+    public List<String> sendAdvExample(String verifyId, int image_num) {
+        List<String> advExamples = wiNRResultManager.getAdvExample(verifyId, image_num);
         return advExamples;
     }
 
@@ -101,27 +120,27 @@ public class WiNRKit {
         }
         new Thread(() -> {
             taskExecuteListener.beforeTaskExecute();
-            task(null);
+            task();
             taskExecuteListener.afterTaskExecute();
         }).start();
         return 1;
     }
 
-    public int testSync(String userId, Map<String, Object> params) {
+    public int testSync(String userId) {
         taskExecuteListener.beforeTaskExecute();
-        if (!paramsCheck(params)) {
+        if (!paramsCheck()) {
             return -1;
         }
-        task(params);
+        task();
         taskExecuteListener.afterTaskExecute();
         return 1;
     }
 
-    private boolean paramsCheck(Map<String, Object> params) {
+    private boolean paramsCheck() {
         return true;
     }
 
-    private void task(Map<String, Object> params) {
+    private void task() {
         int runStatus = 1;
         String dataset = (String) params.get("dataset");
         String epsilon = (String) params.get("epsilon");
