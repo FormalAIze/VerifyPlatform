@@ -25,21 +25,30 @@ public class WiNRController {
 
     @ResponseBody
     @CrossOrigin(origins = "*")
+    @GetMapping("/winr/verify_id")
+    public String initVerifyId() {
+        String verifyId = UUID.randomUUID().toString().replace("-", "");
+        log.info("verifyId is: " + verifyId);
+        return verifyId;
+    }
+
+    @ResponseBody
+    @CrossOrigin(origins = "*")
     @PostMapping("/winr/sync/{userId}")
     public Map<String, Object> WiNRVerifySync(@PathVariable String userId, @RequestParam Map<String, Object> params) throws IOException {
         for (String key : params.keySet()) {
             log.info(key + ": " + params.get(key).toString());
         }
-        String verifyId = UUID.randomUUID().toString().replace("-", "");
-        log.info("verifyId is: " + verifyId);
-        params.put("verifyId", verifyId);
+        HashMap<String, Object> result = new HashMap<>();
+        String verifyId = (String) params.get("verify_id");
+        if (verifyId == null) {
+            result.put("status", "no verify id provided");
+            return result;
+        }
         wiNRKit.setParams(params);
         int status = wiNRKit.testSync(userId);
         Map<String, String> resultFile = wiNRKit.sendResultSync();
         log.info(resultFile.toString());
-
-        HashMap<String, Object> result = new HashMap<>();
-        result.put("verifyId", verifyId);
         if (status > 0) {
             result.put("status", "start running successfully");
             result.put("resultFile", resultFile);
@@ -49,6 +58,7 @@ public class WiNRController {
         int image_num = Integer.parseInt(resultFile.get("unrobust_number")) * 2;
         List<String> advExamples = wiNRKit.sendAdvExample(verifyId, image_num);
         result.put("advExamples", advExamples);
+        result.put("verifyId", verifyId);
         return result;
     }
 
