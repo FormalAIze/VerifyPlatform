@@ -36,7 +36,8 @@ public class WiNRKit {
         public void afterTaskExecute() {
             log.info("-----afterWiNRTaskExecute-----");
             // 创建一个锚点 方便之后通过verify_id查找文件
-            String verifyId = (String) params.getOrDefault("verifyId", "1");
+            String verifyId = (String) params.get("verifyId");
+            log.info("verify id after task: " + verifyId);
             if (!wiNRResultManager.createResultFileAnchor(verifyId)) {
                 log.error("anchor create failed: result file anchor create failed, verifyId is " + verifyId);
             }
@@ -63,8 +64,8 @@ public class WiNRKit {
         }
     }
 
-    public Map<String, String> sendResultSync() throws IOException {
-        String verifyId = (String) params.getOrDefault("verifyId", "1");
+    public Map<String, String> getResultSync() throws IOException {
+        String verifyId = (String) params.get("verifyId");
         InputStreamReader file = wiNRResultManager.getResultFile(verifyId);
         if (file == null) {
             return new HashMap<>();
@@ -85,7 +86,9 @@ public class WiNRKit {
         return resultMap;
     }
 
-    public List<String> sendAdvExample(String verifyId, int image_num) {
+    public List<String> getAdvExample(int image_num) {
+        String verifyId = (String) params.get("verifyId");
+
         List<String> advExamples = wiNRResultManager.getAdvExample(verifyId, image_num);
         return advExamples;
     }
