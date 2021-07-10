@@ -15,7 +15,7 @@ public class VerifastResultManager extends ResultManager {
     private String resultFilepathMock = "./mock.txt";
 
     @Override
-    public InputStreamReader getResultFile() {
+    public InputStreamReader getResultFile(String verifyId) {
         try {
             return new InputStreamReader(new FileInputStream(resultFilepathMock));
         } catch (FileNotFoundException e) {
@@ -26,7 +26,7 @@ public class VerifastResultManager extends ResultManager {
     }
 
     @Override
-    public List<String> getAdvExample(int verifyId, int image_num) {
+    public List<String> getAdvExample(String verifyId, int image_num) {
         return null;
     }
 }

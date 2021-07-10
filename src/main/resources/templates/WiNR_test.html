@@ -6,29 +6,41 @@
 </head>
 <body>
 <h1>WiNR</h1>
+<div>
+    <h3>获取验证结果</h3>
+    verify id:
+    <input id="input-verify-id" type="text" name="verify_id"><br>
+    <button onclick="fetchVerificationResult()">获取验证结果</button>
+</div>
 网络模型:
 <select id="input-model" name="model">
-    <option value="models/cifar10_cnn_lenet_averpool_sigmoid_myself.h5">cifar10_cnn_lenet_averpool_sigmoid_myself</option>
-    <option value="models/fashion_mnist_cnn_4layer_5_3_sigmoid_myself.h5">fashion_mnist_cnn_4layer_5_3_sigmoid_myself</option>
-    <option value="models/fashion_mnist_cnn_6layer_5_3_sigmoid_myself.h5">fashion_mnist_cnn_6layer_5_3_sigmoid_myself</option>
-    <option value="models/fashion_mnist_cnn_8layer_5_3_sigmoid_myself.h5">fashion_mnist_cnn_8layer_5_3_sigmoid_myself</option>
-    <option value="models/fashion_mnist_cnn_10layer_5_3_sigmoid_myself.h5">fashion_mnist_cnn_10layer_5_3_sigmoid_myself</option>
+    <option value="models/cifar10_cnn_lenet_averpool_sigmoid_myself.h5">cifar10_cnn_lenet_averpool_sigmoid_myself
+    </option>
+    <option value="models/fashion_mnist_cnn_4layer_5_3_sigmoid_myself.h5" selected>fashion_mnist_cnn_4layer_5_3_sigmoid_myself
+    </option>
+    <option value="models/fashion_mnist_cnn_6layer_5_3_sigmoid_myself.h5">fashion_mnist_cnn_6layer_5_3_sigmoid_myself
+    </option>
+    <option value="models/fashion_mnist_cnn_8layer_5_3_sigmoid_myself.h5">fashion_mnist_cnn_8layer_5_3_sigmoid_myself
+    </option>
+    <option value="models/fashion_mnist_cnn_10layer_5_3_sigmoid_myself.h5">
+        fashion_mnist_cnn_10layer_5_3_sigmoid_myself
+    </option>
     <option value="models/gtsrb_cnn_5layer_sigmoid_myself.h5">gtsrb_cnn_5layer_sigmoid_myself</option>
 </select><br>
-Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0"><br>
+Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0.01"><br>
 数据集:
 <select id="input-dataset" name="dataset">
     <option value="fashion_mnist">fashion_mnist</option>
     <option value="cifar10">cifar10</option>
     <option value="gtsrb">gtsrb</option>
 </select><br>
-图片数量: <input id="input-image-num" type="text" name="epsilon" value="0"><br>
+图片数量: <input id="input-image-num" type="text" name="epsilon" value="2"><br>
 
 <div id="loading">请稍等</div>
 
-<button onclick="formTest()">FormTest</button>
-<button onclick="startTestMock()">StartMock</button>
-<button onclick="startTest()">StartTest</button>
+<!--<button onclick="formTest()">FormTest</button>-->
+<!--<button onclick="startTestMock()">StartMock</button>-->
+<button onclick="startTest()">开始验证</button>
 <!--<button onclick="closeWebSocket()">Close</button>-->
 <!--<div id="terminal"-->
 <!--     style="width: 80%; height: 400px; margin: 20px auto;background: antiquewhite;overflow: auto; padding: 20px 10px">-->
@@ -150,27 +162,17 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0"><br>
             $("#result-content").html("<p>" + resultFileString + "</p>");
             for (var advExample of data.advExamples) {
                 var filename = "http://" + base_url + "/winr/adv_image/" + advExample
-                $("#adv-image-area").append("<div><img src=\"" + filename + "\"/><p>" + advExample + "</p></div>")
+                $("#adv-image-area").append("<div class=\"adv-image\"><img src=\"" + filename + "\"/><p>" + advExample + "</p></div>")
             }
             console.log("Load was performed.")
         });
     }
 
-    function startTest() {
+    function fetchVerificationResult() {
         reset()
-
-        const dataset = $("#input-dataset option:selected");
-        const epsilon = $("#input-epsilon");
-        const model = $("#input-model option:selected");
-        const imageNum = $("#input-image-num");
-
+        var verifyId = $("#input-verify-id").val()
         $("#loading").animate({opacity: "1"})
-        $.post("http://" + base_url + "/winr/sync/" + userID, {
-            dataset: dataset.val(),
-            epsilon: epsilon.val(),
-            model: model.val(),
-            imageNum: imageNum.val()
-        }, function (data) {
+        $.get("http://" + base_url + "/winr/verification/" + verifyId, function (data) {
             $("#loading").animate({opacity: "0"});
             var resultFile = data.resultFile
             var resultFileString = ""
@@ -178,12 +180,57 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0"><br>
                 resultFileString += (key + ": " + resultFile[key] + "<br>")
             }
             console.log(resultFile)
+            console.log("verify id is: " + data.verifyId)
             $("#result-content").html("<p>" + resultFileString + "</p>");
             for (var advExample of data.advExamples) {
                 var filename = "http://" + base_url + "/winr/adv_image/" + advExample
-                $("#adv-image-area").append("<img src=\"" + filename + "\"/>")
+                console.log("advExample: " + advExample)
+                $("#adv-image-area").append("<div class=\"adv-image\"><img src=\"" + filename + "\"/><p>" + advExample + "</p></div>")
             }
-            console.log("Load was performed.")
+        });
+    }
+
+    function startTest() {
+        reset()
+
+        var verifyId = "1"
+
+        $("#loading").animate({opacity: "1"})
+        $.get("http://" + base_url + "/winr/verify_id", function (data) {
+            verifyId = data
+            console.log("verify id is: " + verifyId)
+            if (verifyId === "1") {
+                alert("获取verify id失败，验证终止");
+                // 没有获取到verify ID时不进行验证
+            } else {
+                const dataset = $("#input-dataset option:selected");
+                const epsilon = $("#input-epsilon");
+                const model = $("#input-model option:selected");
+                const imageNum = $("#input-image-num");
+
+                $.post("http://" + base_url + "/winr/sync/" + userID, {
+                    verifyId: verifyId,
+                    dataset: dataset.val(),
+                    epsilon: epsilon.val(),
+                    model: model.val(),
+                    imageNum: imageNum.val()
+                }, function (data) {
+                    $("#loading").animate({opacity: "0"});
+                    var resultFile = data.resultFile
+                    var resultFileString = ""
+                    for (var key in resultFile) {
+                        resultFileString += (key + ": " + resultFile[key] + "<br>")
+                    }
+                    console.log(resultFile)
+                    console.log("verify id is: " + data.verifyId)
+                    $("#result-content").html("<p>" + resultFileString + "</p>");
+                    for (var advExample of data.advExamples) {
+                        var filename = "http://" + base_url + "/winr/adv_image/" + advExample
+                        $("#adv-image-area").append("<div class=\"adv-image\"><img src=\"" + filename + "\"/><p>" + advExample + "</p></div>")
+                    }
+                    console.log("Load was performed.")
+                })
+            }
         })
     }
 
@@ -200,6 +247,11 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0"><br>
     }
 </script>
 <style type="text/css">
+    .adv-image {
+        display: inline-block;
+        text-align: center;
+    }
+
     #loading {
         z-index: 1;
         text-align: center;

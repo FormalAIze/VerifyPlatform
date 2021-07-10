@@ -36,7 +36,7 @@ public class VerifastKit {
     };
 
     private void sendResultFile() throws IOException {
-        InputStreamReader file = resultManager.getResultFile();
+        InputStreamReader file = resultManager.getResultFile("1");
         BufferedReader reader = new BufferedReader(file);
         String line;
         while ((line = reader.readLine()) != null) {
