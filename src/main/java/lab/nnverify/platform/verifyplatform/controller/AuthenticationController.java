@@ -2,6 +2,7 @@ package lab.nnverify.platform.verifyplatform.controller;
 
 import lab.nnverify.platform.verifyplatform.models.AuthenticationRequest;
 import lab.nnverify.platform.verifyplatform.models.AuthenticationResponse;
+import lab.nnverify.platform.verifyplatform.models.ResponseBody;
 import lab.nnverify.platform.verifyplatform.services.MyUserDetailsService;
 import lab.nnverify.platform.verifyplatform.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -11,12 +12,10 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
+@CrossOrigin
 @RestController
 public class AuthenticationController {
 
@@ -35,7 +34,8 @@ public class AuthenticationController {
     }
 
     @PostMapping(value = "/authenticate")
-    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) {
+    public ResponseBody createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) {
+        ResponseBody response = new ResponseBody();
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())
@@ -43,7 +43,9 @@ public class AuthenticationController {
         }
         catch (BadCredentialsException e) {
             log.error("authentication failed! username: " + authenticationRequest.getUsername());
-            return ResponseEntity.status(403).body("wrong username or password");
+            response.setStatus(403);
+            response.getData().put("message", "wrong username or password");
+            return response;
         }
 
 
@@ -53,6 +55,8 @@ public class AuthenticationController {
         final String jwt = jwtTokenUtil.generateToken(userDetails);
 
         log.info("authenticate success");
-        return ResponseEntity.ok(new AuthenticationResponse(jwt));
+        response.setStatus(200);
+        response.getData().put("token", jwt);
+        return response;
     }
 }
