@@ -216,15 +216,15 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0.01"><br>
                     imageNum: imageNum.val()
                 }, function (data) {
                     $("#loading").animate({opacity: "0"});
-                    var resultFile = data.resultFile
+                    var resultFile = data.data.resultFile
                     var resultFileString = ""
                     for (var key in resultFile) {
                         resultFileString += (key + ": " + resultFile[key] + "<br>")
                     }
                     console.log(resultFile)
-                    console.log("verify id is: " + data.verifyId)
+                    console.log("verify id is: " + data.data.verifyId)
                     $("#result-content").html("<p>" + resultFileString + "</p>");
-                    for (var advExample of data.advExamples) {
+                    for (var advExample of data.data.advExamples) {
                         var filename = "http://" + base_url + "/winr/adv_image/" + advExample
                         $("#adv-image-area").append("<div class=\"adv-image\"><img src=\"" + filename + "\"/><p>" + advExample + "</p></div>")
                     }

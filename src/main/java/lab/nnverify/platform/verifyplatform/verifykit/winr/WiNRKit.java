@@ -1,8 +1,15 @@
 package lab.nnverify.platform.verifyplatform.verifykit.winr;
 
 import lab.nnverify.platform.verifyplatform.config.SessionManager;
+import lab.nnverify.platform.verifyplatform.models.Verification;
+import lab.nnverify.platform.verifyplatform.services.VerificationService;
 import lab.nnverify.platform.verifyplatform.verifykit.TaskExecuteListener;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
+import org.springframework.stereotype.Service;
+import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.*;
@@ -11,16 +18,34 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 这个类需要是线程安全的
+ */
 @Slf4j
+@Service
+@Scope(value = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class WiNRKit {
+    @Autowired
+    VerificationService verificationService;
+
+    private int runStatus = 1;
+
+    public int getRunStatus() {
+        return runStatus;
+    }
+
+    public void setRunStatus(int runStatus) {
+        this.runStatus = runStatus;
+    }
+
     public WiNRKit() {
     }
 
-    public void setParams(Map<String, Object> params) {
+    public void setParams(Verification params) {
         this.params = params;
     }
 
-    private Map<String, Object> params = null;
+    private Verification params = null;
     private WebSocketSession session = null;
     private WiNRResultManager wiNRResultManager = new WiNRResultManager();
     private int asyncCheck = 0;
@@ -29,6 +54,11 @@ public class WiNRKit {
         public void beforeTaskExecute() {
             log.info("-----beforeWiNRTaskExecute-----");
             asyncCheck++;
+            if (verificationService.saveVerificationParams(params)) {
+                log.info("write verification record to database");
+            } else {
+                log.error("fail to write verification record to database");
+            }
             log.info("the async check value is: " + asyncCheck);
         }
 
@@ -36,13 +66,18 @@ public class WiNRKit {
         public void afterTaskExecute() {
             log.info("-----afterWiNRTaskExecute-----");
             // 创建一个锚点 方便之后通过verify_id查找文件
-            String verifyId = (String) params.get("verifyId");
+            String verifyId = params.getVerifyId();
             log.info("verify id after task: " + verifyId);
             if (!wiNRResultManager.createResultFileAnchor(verifyId)) {
                 log.error("anchor create failed: result file anchor create failed, verifyId is " + verifyId);
             }
             if (!wiNRResultManager.createAdvExampleAnchor(verifyId)) {
                 log.error("anchor create failed: advExample file anchor create failed, verifyId is " + verifyId);
+            }
+            if (runStatus == 0) {
+                verificationService.finishVerificationUpdateStatus(verifyId, "successfully end");
+            } else {
+                verificationService.finishVerificationUpdateStatus(verifyId, "end with error");
             }
 //            try {
 //                sendResultFile();
@@ -65,7 +100,7 @@ public class WiNRKit {
     }
 
     public Map<String, String> getResultSync() throws IOException {
-        String verifyId = (String) params.get("verifyId");
+        String verifyId = params.getVerifyId();
         InputStreamReader file = wiNRResultManager.getResultFile(verifyId);
         if (file == null) {
             return new HashMap<>();
@@ -87,7 +122,7 @@ public class WiNRKit {
     }
 
     public List<String> getAdvExample(int image_num) {
-        String verifyId = (String) params.get("verifyId");
+        String verifyId = params.getVerifyId();
 
         List<String> advExamples = wiNRResultManager.getAdvExample(verifyId, image_num);
         return advExamples;
@@ -129,7 +164,7 @@ public class WiNRKit {
         return 1;
     }
 
-    public int testSync(String userId) {
+    public int testSync() {
         taskExecuteListener.beforeTaskExecute();
         if (!paramsCheck()) {
             return -1;
@@ -144,11 +179,10 @@ public class WiNRKit {
     }
 
     private void task() {
-        int runStatus = 1;
-        String dataset = (String) params.get("dataset");
-        String epsilon = (String) params.get("epsilon");
-        String model = (String) params.get("model");
-        String imageNum = (String) params.get("imageNum");
+        String dataset = params.getDataset();
+        String epsilon = params.getEpsilon();
+        String model = params.getNetName();
+        String imageNum = params.getNumOfImage();
 
         try {
             PrintWriter printWriter = new PrintWriter(WiNRConfig.basicPath + "run.sh");

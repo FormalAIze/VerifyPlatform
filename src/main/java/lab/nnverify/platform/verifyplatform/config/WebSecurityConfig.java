@@ -42,9 +42,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf().disable()
                 .authorizeRequests().antMatchers("/authenticate").permitAll().and()
-//                .authorizeRequests().antMatchers("/user/login").permitAll().and()
-//                .authorizeRequests().antMatchers("/user/info").permitAll().and()
-                .authorizeRequests().antMatchers("/user/logout").permitAll()
+                .authorizeRequests().antMatchers("/user/**").permitAll().and()
+                .authorizeRequests().antMatchers("/winr/**").permitAll()
                 .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
                 .anyRequest().authenticated().and()
                 .exceptionHandling().and().sessionManagement()

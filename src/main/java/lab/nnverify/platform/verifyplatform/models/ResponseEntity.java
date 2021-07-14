@@ -10,7 +10,8 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ResponseBody {
+public class ResponseEntity {
     private int status;
+    private String msg;
     private Map<String, Object> data = new HashMap<>();
 }

@@ -1,13 +1,11 @@
 package lab.nnverify.platform.verifyplatform.controller;
 
 import lab.nnverify.platform.verifyplatform.models.AuthenticationRequest;
-import lab.nnverify.platform.verifyplatform.models.AuthenticationResponse;
-import lab.nnverify.platform.verifyplatform.models.ResponseBody;
+import lab.nnverify.platform.verifyplatform.models.ResponseEntity;
 import lab.nnverify.platform.verifyplatform.services.MyUserDetailsService;
 import lab.nnverify.platform.verifyplatform.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,8 +32,8 @@ public class AuthenticationController {
     }
 
     @PostMapping(value = "/authenticate")
-    public ResponseBody createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) {
-        ResponseBody response = new ResponseBody();
+    public ResponseEntity createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) {
+        ResponseEntity response = new ResponseEntity();
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())

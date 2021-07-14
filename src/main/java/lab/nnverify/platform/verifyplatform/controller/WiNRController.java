@@ -1,7 +1,10 @@
 package lab.nnverify.platform.verifyplatform.controller;
 
+import lab.nnverify.platform.verifyplatform.models.ResponseEntity;
+import lab.nnverify.platform.verifyplatform.models.Verification;
 import lab.nnverify.platform.verifyplatform.verifykit.winr.WiNRKit;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +17,9 @@ import java.util.UUID;
 
 @Slf4j
 @Controller
-@Scope("prototype")
 public class WiNRController {
-    WiNRKit wiNRKit = new WiNRKit();
+    @Autowired
+    WiNRKit wiNRKit;
 
     @GetMapping("/winr/verify")
     public String WiNRVerify() {
@@ -32,64 +35,76 @@ public class WiNRController {
         return verifyId;
     }
 
-    @ResponseBody
-    @CrossOrigin(origins = "*")
-    @GetMapping("/winr/verification/{verifyId}")
-    public Map<String, Object> fetchVerificationResult(@PathVariable String verifyId) throws IOException {
-        HashMap<String, Object> result = new HashMap<>();
-        HashMap<String, Object> params = new HashMap<>();
-        params.put("verifyId", verifyId);
-        wiNRKit.setParams(params);
-        Map<String, String> resultFile = wiNRKit.getResultSync();
-        log.info(resultFile.toString());
-        // 可能会出现的异常情况：没有成功运行验证但是需要获取结果
-        result.put("resultFile", resultFile);
-        int image_num = Integer.parseInt(resultFile.get("unrobust_number")) * 2;
-        List<String> advExamples = wiNRKit.getAdvExample(image_num);
-        result.put("advExamples", advExamples);
-        result.put("verifyId", verifyId);
-        return result;
-    }
+//    @ResponseBody
+//    @CrossOrigin(origins = "*")
+//    @GetMapping("/winr/verification/{verifyId}")
+//    public Map<String, Object> fetchVerificationResult(@PathVariable String verifyId) throws IOException {
+//        HashMap<String, Object> result = new HashMap<>();
+//        HashMap<String, Object> params = new HashMap<>();
+//        params.put("verifyId", verifyId);
+//        wiNRKit.setParams(params);
+//        Map<String, String> resultFile = wiNRKit.getResultSync();
+//        log.info(resultFile.toString());
+//        // 可能会出现的异常情况：没有成功运行验证但是需要获取结果
+//        result.put("resultFile", resultFile);
+//        int image_num = Integer.parseInt(resultFile.get("unrobust_number")) * 2;
+//        List<String> advExamples = wiNRKit.getAdvExample(image_num);
+//        result.put("advExamples", advExamples);
+//        result.put("verifyId", verifyId);
+//        return result;
+//    }
 
     @ResponseBody
     @CrossOrigin(origins = "*")
     @PostMapping("/winr/sync/{userId}")
-    public Map<String, Object> verifySync(@PathVariable String userId, @RequestParam Map<String, Object> params) throws IOException {
+    public ResponseEntity verifySync(@PathVariable Integer userId, @RequestParam Map<String, Object> params) throws IOException {
+        ResponseEntity response = new ResponseEntity();
         for (String key : params.keySet()) {
             log.info(key + ": " + params.get(key).toString());
         }
-        HashMap<String, Object> result = new HashMap<>();
         String verifyId = (String) params.get("verifyId");
         if (verifyId == null) {
-            result.put("status", "no verify id provided");
-            return result;
+            response.setStatus(410);
+            response.setMsg("no verify id provided");
+            return response;
         }
-        wiNRKit.setParams(params);
-        int status = wiNRKit.testSync(userId);
+        Verification verificationParams = new Verification(verifyId, userId, "WiNR", (String) params.get("epsilon"),
+                (String) params.get("model"), (String) params.get("dataset"), (String) params.get("imageNum"),
+                "runing fore ground");
+        wiNRKit.setParams(verificationParams);
+        int status = wiNRKit.testSync();
+        if (wiNRKit.getRunStatus() != 0) {
+            response.setStatus(510);
+            response.setMsg("verification task end with error");
+            return response;
+        }
         Map<String, String> resultFile = wiNRKit.getResultSync();
         log.info(resultFile.toString());
         if (status > 0) {
-            result.put("status", "start running successfully");
-            result.put("resultFile", resultFile);
+            response.setMsg("start running successfully");
+            response.getData().put("resultFile", resultFile);
         } else {
-            result.put("status", "start running fail");
+            response.setMsg("start running fail");
         }
         int image_num = Integer.parseInt(resultFile.get("unrobust_number")) * 2;
         List<String> advExamples = wiNRKit.getAdvExample(image_num);
-        result.put("advExamples", advExamples);
-        result.put("verifyId", verifyId);
-        return result;
+        response.getData().put("advExamples", advExamples);
+        response.getData().put("verifyId", verifyId);
+        return response;
     }
 
-    @ResponseBody
-    @CrossOrigin(origins = "*")
-    @RequestMapping("/winr/adv/{verifyId}")
-    public List<String> getAdvExample(@PathVariable String verifyId) {
-        HashMap<String, Object> params = new HashMap<>();
-        params.put("verifyId", verifyId);
-        wiNRKit.setParams(params);
-        return wiNRKit.getAdvExample(1);
-    }
+//    @ResponseBody
+//    @CrossOrigin(origins = "*")
+//    @RequestMapping("/winr/adv/{verifyId}")
+//    public ResponseEntity getAdvExample(@PathVariable String verifyId) {
+//        ResponseEntity response = new ResponseEntity();
+//        HashMap<String, Object> params = new HashMap<>();
+//        params.put("verifyId", verifyId);
+//        wiNRKit.setParams(params);
+//        response.setStatus(200);
+//        response.getData().put("advExamples", wiNRKit.getAdvExample(1));
+//        return response;
+//    }
 
     @Deprecated
     @ResponseBody
