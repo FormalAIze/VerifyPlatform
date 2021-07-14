@@ -47,14 +47,15 @@ public class WiNRController {
         wiNRKit.setParams(verification);
         Map<String, String> resultFile = wiNRKit.getResultSync();
         log.info(resultFile.toString());
-        if (verification.getStatus().equals("successfully end")) {
+        if (verification.getStatus().equals("success")) {
             response.setMsg("verification successfully end");
             response.getData().put("resultFile", resultFile);
             int image_num = Integer.parseInt(resultFile.get("unrobust_number")) * 2;
             List<String> advExamples = wiNRKit.getAdvExample(image_num);
             response.getData().put("advExamples", advExamples);
         } else {
-            response.setMsg("verification fail");
+            response.setMsg("verification failed");
+            response.getData().put("verificationStatus", verification.getStatus());
         }
         response.getData().put("verifyId", verifyId);
         return response;
@@ -93,23 +94,6 @@ public class WiNRController {
             response.setStatus(200);
         }
         return response;
-//        if (wiNRKit.getRunStatus() != 0) {
-//            response.setStatus(510);
-//            response.setMsg("verification task end with error");
-//            return response;
-//        }
-//        Map<String, String> resultFile = wiNRKit.getResultSync();
-//        log.info(resultFile.toString());
-//        if (status > 0) {
-//            response.setMsg("start running successfully");
-//            response.getData().put("resultFile", resultFile);
-//        } else {
-//            response.setMsg("start running fail");
-//        }
-//        int image_num = Integer.parseInt(resultFile.get("unrobust_number")) * 2;
-//        List<String> advExamples = wiNRKit.getAdvExample(image_num);
-//        response.getData().put("advExamples", advExamples);
-//        response.getData().put("verifyId", verifyId);
     }
 
 //    @ResponseBody
@@ -124,30 +108,4 @@ public class WiNRController {
 //        response.getData().put("advExamples", wiNRKit.getAdvExample(1));
 //        return response;
 //    }
-
-    @Deprecated
-    @ResponseBody
-    @CrossOrigin(origins = "*")
-    @PostMapping("/winr/mock/{userId}")
-    public Map<String, Object> WiNRVerifyMock(@PathVariable String userId, @RequestParam Map<String, Object> params) throws IOException {
-        for (String key : params.keySet()) {
-            log.info(key + ": " + params.get(key).toString());
-        }
-        String verifyId = "1";
-        int status = wiNRKit.testMockSync(userId);
-        Map<String, String> resultFile = wiNRKit.getResultSync();
-
-        HashMap<String, Object> result = new HashMap<>();
-        result.put("verifyId", verifyId);
-        if (status > 0) {
-            result.put("status", "start running successfully");
-            result.put("resultFile", resultFile);
-        } else {
-            result.put("status", "start running fail");
-        }
-        int image_num = Integer.parseInt(resultFile.get("unrobust_number")) * 2;
-        List<String> advExamples = wiNRKit.getAdvExample(image_num);
-        result.put("advExamples", advExamples);
-        return result;
-    }
 }

@@ -40,14 +40,6 @@ public class WiNRKit {
 
     private int asyncCheck = 0;
 
-    public int getRunStatus() {
-        return runStatus;
-    }
-
-    public void setRunStatus(int runStatus) {
-        this.runStatus = runStatus;
-    }
-
     public WiNRKit() {
     }
 
@@ -96,25 +88,8 @@ public class WiNRKit {
                     e.printStackTrace();
                 }
             }
-//            try {
-//                sendResultFile();
-//            } catch (IOException e) {
-//                log.error("file io exception");
-//                e.printStackTrace();
-//            }
         }
     };
-
-    // todo 异步的返回结果使用socket？
-    private void sendResultFile() throws IOException {
-        InputStreamReader file = wiNRResultManager.getResultFile("1");
-        BufferedReader reader = new BufferedReader(file);
-        String line;
-        ArrayList<String> result = new ArrayList<>();
-        while ((line = reader.readLine()) != null) {
-            result.add(line);
-        }
-    }
 
     public Map<String, String> getResultSync() throws IOException {
         String verifyId = params.getVerifyId();
@@ -143,42 +118,6 @@ public class WiNRKit {
 
         List<String> advExamples = wiNRResultManager.getAdvExample(verifyId, image_num);
         return advExamples;
-    }
-
-    public int testMock(String userId) {
-        taskExecuteListener.beforeTaskExecute();
-        new Thread(() -> {
-            taskExecuteListener.beforeTaskExecute();
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            taskExecuteListener.afterTaskExecute();
-        }).start();
-        return 1;
-    }
-
-    public int testMockSync(String userId) {
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return 1;
-    }
-
-    public int test(String userId) {
-        session = WebSocketSessionManager.getSession(userId);
-        if (session == null) {
-            return -500;
-        }
-        new Thread(() -> {
-            taskExecuteListener.beforeTaskExecute();
-            task();
-            taskExecuteListener.afterTaskExecute();
-        }).start();
-        return 1;
     }
 
     public int testAsync() {
