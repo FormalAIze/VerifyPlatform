@@ -1,6 +1,6 @@
 package lab.nnverify.platform.verifyplatform.verifykit.verifast;
 
-import lab.nnverify.platform.verifyplatform.config.SessionManager;
+import lab.nnverify.platform.verifyplatform.config.WebSocketSessionManager;
 import lab.nnverify.platform.verifyplatform.verifykit.ResultManager;
 import lab.nnverify.platform.verifyplatform.verifykit.TaskExecuteListener;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +45,7 @@ public class VerifastKit {
     }
 
     public int testWithMIPVerifyMock(String userId) {
-        session = SessionManager.getSession(userId);
+        session = WebSocketSessionManager.getSession(userId);
         if (session == null) {
             return -500;
         }
@@ -70,7 +70,7 @@ public class VerifastKit {
     }
 
     public int testWithMIPVerify(String userId) {
-        session = SessionManager.getSession(userId);
+        session = WebSocketSessionManager.getSession(userId);
         if (session == null) {
             return -500;
         }

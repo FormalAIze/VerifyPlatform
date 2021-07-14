@@ -13,7 +13,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry webSocketHandlerRegistry) {
-        webSocketHandlerRegistry.addHandler(new TerminalOutputHandler(), "terminal")
+        webSocketHandlerRegistry.addHandler(new TerminalOutputHandler(), "notification")
                 .setAllowedOrigins("*");
     }
 }

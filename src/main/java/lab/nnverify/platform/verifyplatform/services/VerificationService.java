@@ -17,6 +17,10 @@ public class VerificationService {
         return verificationMapper.fetchVerificationByUserId(userId);
     }
 
+    public Verification fetchVerificationById(String verifyId) {
+        return verificationMapper.fetchVerificationById(verifyId);
+    }
+
     public boolean saveVerificationParams(Verification params) {
         int modified = verificationMapper.insertVerificationRecord(params);
         return modified != 0;

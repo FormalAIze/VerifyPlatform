@@ -20,4 +20,7 @@ public interface VerificationMapper {
 
     @Update("update verification set status=#{status} where verify_id=#{verifyId}")
     int updateVerificationRecordStatus(String verifyId, String status);
+
+    @Select("select verify_id,user_id,tool,epsilon,dataset,num_of_image,net_name,status from verification where verify_id=#{verifyId}")
+    Verification fetchVerificationById(String verifyId);
 }

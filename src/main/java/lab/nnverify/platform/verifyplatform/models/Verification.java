@@ -15,5 +15,6 @@ public class Verification {
     private String netName;
     private String dataset;
     private String numOfImage;
+    // 四种状态: ready, running, success, error
     private String status;
 }
