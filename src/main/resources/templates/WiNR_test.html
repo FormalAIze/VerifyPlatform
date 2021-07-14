@@ -6,12 +6,6 @@
 </head>
 <body>
 <h1>WiNR</h1>
-<div>
-    <h3>获取验证结果</h3>
-    verify id:
-    <input id="input-verify-id" type="text" name="verify_id"><br>
-    <button onclick="fetchVerificationResult()">获取验证结果</button>
-</div>
 网络模型:
 <select id="input-model" name="model">
     <option value="models/cifar10_cnn_lenet_averpool_sigmoid_myself.h5">cifar10_cnn_lenet_averpool_sigmoid_myself
@@ -61,7 +55,7 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0.01"><br>
     var imagesToBeVerify = []
 
     $(function () {
-        // connectWebSocket();
+        connectWebSocket();
     })
 
     //建立WebSocket连接
@@ -70,7 +64,7 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0.01"><br>
         console.log("开始...");
 
         //建立webSocket连接
-        websocket = new WebSocket("ws://" + base_url + "/terminal?id=" + userID);
+        websocket = new WebSocket("ws://" + base_url + "/notification?id=" + userID);
 
         //打开webSokcet连接时，回调该函数
         websocket.onopen = function () {
@@ -85,8 +79,18 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0.01"><br>
 
         //接收信息
         websocket.onmessage = function (msg) {
-            $("#terminal").append("<p>" + msg.data + "</p>")
-            console.log(msg.data);
+            console.log(msg.data)
+        //    收到服务器推送的验证完成通知，获取该次验证数据
+            if (msg.data.startsWith("verify success")) { // 验证执行成功
+                var verifyId = msg.data.split(":")[1];
+                if (verifyId === null) {
+                    console.log("doesn't get verify id, exit");
+                    return
+                }
+                fetchVerificationResult(verifyId);
+            } else {
+                console.log("verify failed");
+            }
         }
 
     }
@@ -168,23 +172,23 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0.01"><br>
         });
     }
 
-    function fetchVerificationResult() {
+    function fetchVerificationResult(verifyId) {
         reset()
-        var verifyId = $("#input-verify-id").val()
         $("#loading").animate({opacity: "1"})
-        $.get("http://" + base_url + "/winr/verification/" + verifyId, function (data) {
+        $.get("http://" + base_url + "/winr/verification", {
+            verifyId: verifyId
+        }, function (data) {
             $("#loading").animate({opacity: "0"});
-            var resultFile = data.resultFile
+            var resultFile = data.data.resultFile
             var resultFileString = ""
             for (var key in resultFile) {
                 resultFileString += (key + ": " + resultFile[key] + "<br>")
             }
             console.log(resultFile)
-            console.log("verify id is: " + data.verifyId)
+            console.log("verify id is: " + data.data.verifyId)
             $("#result-content").html("<p>" + resultFileString + "</p>");
-            for (var advExample of data.advExamples) {
+            for (var advExample of data.data.advExamples) {
                 var filename = "http://" + base_url + "/winr/adv_image/" + advExample
-                console.log("advExample: " + advExample)
                 $("#adv-image-area").append("<div class=\"adv-image\"><img src=\"" + filename + "\"/><p>" + advExample + "</p></div>")
             }
         });
@@ -208,27 +212,32 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0.01"><br>
                 const model = $("#input-model option:selected");
                 const imageNum = $("#input-image-num");
 
-                $.post("http://" + base_url + "/winr/sync/" + userID, {
+                $.post("http://" + base_url + "/winr/verify/" + userID, {
                     verifyId: verifyId,
                     dataset: dataset.val(),
                     epsilon: epsilon.val(),
                     model: model.val(),
                     imageNum: imageNum.val()
                 }, function (data) {
-                    $("#loading").animate({opacity: "0"});
-                    var resultFile = data.data.resultFile
-                    var resultFileString = ""
-                    for (var key in resultFile) {
-                        resultFileString += (key + ": " + resultFile[key] + "<br>")
+                    console.log(data)
+                    if (data.status === 200) {
+                        console.log("verification start successfully");
+                    } else {
+                        console.log("verification start failed");
                     }
-                    console.log(resultFile)
-                    console.log("verify id is: " + data.data.verifyId)
-                    $("#result-content").html("<p>" + resultFileString + "</p>");
-                    for (var advExample of data.data.advExamples) {
-                        var filename = "http://" + base_url + "/winr/adv_image/" + advExample
-                        $("#adv-image-area").append("<div class=\"adv-image\"><img src=\"" + filename + "\"/><p>" + advExample + "</p></div>")
-                    }
-                    console.log("Load was performed.")
+                    // $("#loading").animate({opacity: "0"});
+                    // var resultFile = data.data.resultFile
+                    // var resultFileString = ""
+                    // for (var key in resultFile) {
+                    //     resultFileString += (key + ": " + resultFile[key] + "<br>")
+                    // }
+                    // console.log(resultFile)
+                    // console.log("verify id is: " + data.data.verifyId)
+                    // $("#result-content").html("<p>" + resultFileString + "</p>");
+                    // for (var advExample of data.data.advExamples) {
+                    //     var filename = "http://" + base_url + "/winr/adv_image/" + advExample
+                    //     $("#adv-image-area").append("<div class=\"adv-image\"><img src=\"" + filename + "\"/><p>" + advExample + "</p></div>")
+                    // }
                 })
             }
         })

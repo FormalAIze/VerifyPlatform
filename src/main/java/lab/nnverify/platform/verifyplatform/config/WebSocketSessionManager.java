@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.HashMap;
 
 @Slf4j
-public class SessionManager {
+public class WebSocketSessionManager {
     private static HashMap<String, WebSocketSession> sessionPool = new HashMap<>();
 
     public static void addSession(String id, WebSocketSession session) {

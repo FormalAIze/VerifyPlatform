@@ -1,6 +1,6 @@
 package lab.nnverify.platform.verifyplatform.verifykit.winr;
 
-import lab.nnverify.platform.verifyplatform.config.SessionManager;
+import lab.nnverify.platform.verifyplatform.config.WebSocketSessionManager;
 import lab.nnverify.platform.verifyplatform.models.Verification;
 import lab.nnverify.platform.verifyplatform.services.VerificationService;
 import lab.nnverify.platform.verifyplatform.verifykit.TaskExecuteListener;
@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.*;
@@ -30,6 +32,14 @@ public class WiNRKit {
 
     private int runStatus = 1;
 
+    private Verification params = null;
+
+    private WebSocketSession session = null;
+
+    private final WiNRResultManager wiNRResultManager = new WiNRResultManager();
+
+    private int asyncCheck = 0;
+
     public int getRunStatus() {
         return runStatus;
     }
@@ -45,15 +55,12 @@ public class WiNRKit {
         this.params = params;
     }
 
-    private Verification params = null;
-    private WebSocketSession session = null;
-    private WiNRResultManager wiNRResultManager = new WiNRResultManager();
-    private int asyncCheck = 0;
     private TaskExecuteListener taskExecuteListener = new TaskExecuteListener() {
         @Override
         public void beforeTaskExecute() {
             log.info("-----beforeWiNRTaskExecute-----");
             asyncCheck++;
+            params.setStatus("running");
             if (verificationService.saveVerificationParams(params)) {
                 log.info("write verification record to database");
             } else {
@@ -75,9 +82,19 @@ public class WiNRKit {
                 log.error("anchor create failed: advExample file anchor create failed, verifyId is " + verifyId);
             }
             if (runStatus == 0) {
-                verificationService.finishVerificationUpdateStatus(verifyId, "successfully end");
+                verificationService.finishVerificationUpdateStatus(verifyId, "success");
+                try {
+                    session.sendMessage(new TextMessage("verify success. verifyId:" + verifyId));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             } else {
-                verificationService.finishVerificationUpdateStatus(verifyId, "end with error");
+                verificationService.finishVerificationUpdateStatus(verifyId, "error");
+                try {
+                    session.sendMessage(new TextMessage("verify failed. verifyId:" + verifyId));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 //            try {
 //                sendResultFile();
@@ -152,7 +169,7 @@ public class WiNRKit {
     }
 
     public int test(String userId) {
-        session = SessionManager.getSession(userId);
+        session = WebSocketSessionManager.getSession(userId);
         if (session == null) {
             return -500;
         }
@@ -164,13 +181,21 @@ public class WiNRKit {
         return 1;
     }
 
-    public int testSync() {
-        taskExecuteListener.beforeTaskExecute();
+    public int testAsync() {
+        session = WebSocketSessionManager.getSession(String.valueOf(params.getUserId()));
+        // 参数检查不通过，不执行验证任务，目前这个函数还没写
         if (!paramsCheck()) {
-            return -1;
+            return -400;
         }
-        task();
-        taskExecuteListener.afterTaskExecute();
+        // 没有获取到websocket session，完成执行之后无法通知浏览器端，目前先直接返回错误
+        if (session == null) {
+            return -100;
+        }
+        new Thread(() -> {
+            taskExecuteListener.beforeTaskExecute();
+            task();
+            taskExecuteListener.afterTaskExecute();
+        }).start();
         return 1;
     }
 

@@ -1,7 +1,7 @@
 package lab.nnverify.platform.verifyplatform.socket;
 
 import com.alibaba.fastjson.JSONObject;
-import lab.nnverify.platform.verifyplatform.config.SessionManager;
+import lab.nnverify.platform.verifyplatform.config.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -20,7 +20,7 @@ public class TerminalOutputHandler extends TextWebSocketHandler {
         log.info(session.getId());
         log.info(String.valueOf(session.getPrincipal()));
         // session.id: unique string
-        // session.uri: ws://localhost:9090/terminal/ID=888
+        // session.uri: ws://localhost:9090/notification/ID=888
         if (session.getUri() == null) {
             log.info("no user id");
             session.close();
@@ -28,7 +28,7 @@ public class TerminalOutputHandler extends TextWebSocketHandler {
             List<String> ids = UriComponentsBuilder.fromUri(session.getUri()).build().getQueryParams().get("id");
             String userId = ids.get(0);
             log.info("userId: " + userId);
-            SessionManager.addSession(userId, session);
+            WebSocketSessionManager.addSession(userId, session);
             log.info("connection established");
         }
     }
@@ -36,7 +36,7 @@ public class TerminalOutputHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         log.info("connection closed");
-        SessionManager.deleteSession(session);
+        WebSocketSessionManager.deleteSession(session);
     }
 
     @Override
