@@ -10,10 +10,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Slf4j
 @Controller
@@ -77,7 +76,8 @@ public class WiNRController {
         }
         Verification verificationParams = new Verification(verifyId, userId, "WiNR", (String) params.get("epsilon"),
                 (String) params.get("model"), (String) params.get("dataset"), (String) params.get("imageNum"),
-                "ready");
+                "ready", null);
+        setTimestamp(verificationParams);
         wiNRKit.setParams(verificationParams);
         int status = wiNRKit.testAsync();
         if (status == -100) {
@@ -94,6 +94,12 @@ public class WiNRController {
             response.setStatus(200);
         }
         return response;
+    }
+
+    private void setTimestamp(Verification verification) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        simpleDateFormat.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"));
+        verification.setStartTime(Timestamp.valueOf(simpleDateFormat.format(new Date())));
     }
 
 //    @ResponseBody

@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,4 +19,5 @@ public class Verification {
     private String numOfImage;
     // 四种状态: ready, running, success, error
     private String status;
+    private Timestamp startTime;
 }
