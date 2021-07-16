@@ -179,7 +179,7 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0.01"><br>
             verifyId: verifyId
         }, function (data) {
             $("#loading").animate({opacity: "0"});
-            var resultFile = data.data.resultFile
+            var resultFile = data.data.result
             var resultFileString = ""
             for (var key in resultFile) {
                 resultFileString += (key + ": " + resultFile[key] + "<br>")
@@ -201,7 +201,7 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0.01"><br>
 
         $("#loading").animate({opacity: "1"})
         $.get("http://" + base_url + "/winr/verify_id", function (data) {
-            verifyId = data
+            verifyId = data.data.verifyId
             console.log("verify id is: " + verifyId)
             if (verifyId === "1") {
                 alert("获取verify id失败，验证终止");

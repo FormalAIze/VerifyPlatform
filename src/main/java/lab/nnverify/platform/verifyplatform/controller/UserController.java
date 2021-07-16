@@ -27,6 +27,7 @@ public class UserController {
         return response;
     }
 
+    @Deprecated
     @PostMapping("/user/login")
     public ResponseEntity userLogin(@RequestBody AuthenticationRequest request) {
         ResponseEntity response = new ResponseEntity();

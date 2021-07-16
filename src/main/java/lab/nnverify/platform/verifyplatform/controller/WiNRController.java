@@ -31,10 +31,13 @@ public class WiNRController {
     @ResponseBody
     @CrossOrigin(origins = "*")
     @GetMapping("/winr/verify_id")
-    public String initVerifyId() {
+    public ResponseEntity initVerifyId() {
         String verifyId = UUID.randomUUID().toString().replace("-", "");
         log.info("verifyId is: " + verifyId);
-        return verifyId;
+        ResponseEntity response = new ResponseEntity();
+        response.setStatus(200);
+        response.getData().put("verifyId", verifyId);
+        return response;
     }
 
     @ResponseBody
@@ -44,15 +47,17 @@ public class WiNRController {
         Verification verification = verificationService.fetchVerificationById(verifyId);
         ResponseEntity response = new ResponseEntity();
         wiNRKit.setParams(verification);
-        Map<String, String> resultFile = wiNRKit.getResultSync();
-        log.info(resultFile.toString());
+        Map<String, String> result = wiNRKit.getResultSync();
+        log.info(result.toString());
         if (verification.getStatus().equals("success")) {
+            response.setStatus(200);
             response.setMsg("verification successfully end");
-            response.getData().put("resultFile", resultFile);
-            int image_num = Integer.parseInt(resultFile.get("unrobust_number")) * 2;
+            response.getData().put("result", result);
+            int image_num = Integer.parseInt(result.get("unrobust_number")) * 2;
             List<String> advExamples = wiNRKit.getAdvExample(image_num);
             response.getData().put("advExamples", advExamples);
         } else {
+            response.setStatus(-500);
             response.setMsg("verification failed");
             response.getData().put("verificationStatus", verification.getStatus());
         }

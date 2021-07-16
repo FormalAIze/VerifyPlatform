@@ -42,7 +42,7 @@ public class AuthenticationController {
         catch (BadCredentialsException e) {
             log.error("authentication failed! username: " + authenticationRequest.getUsername());
             response.setStatus(403);
-            response.getData().put("message", "wrong username or password");
+            response.setMsg("wrong username or password");
             return response;
         }
 
