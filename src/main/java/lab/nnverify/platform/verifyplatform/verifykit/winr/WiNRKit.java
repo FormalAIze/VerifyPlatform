@@ -3,6 +3,7 @@ package lab.nnverify.platform.verifyplatform.verifykit.winr;
 import lab.nnverify.platform.verifyplatform.config.WebSocketSessionManager;
 import lab.nnverify.platform.verifyplatform.models.WiNRVerification;
 import lab.nnverify.platform.verifyplatform.services.VerificationService;
+import lab.nnverify.platform.verifyplatform.verifykit.ResultManager;
 import lab.nnverify.platform.verifyplatform.verifykit.TaskExecuteListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ public class WiNRKit {
 
     private WebSocketSession session = null;
 
-    private final WiNRResultManager wiNRResultManager = new WiNRResultManager();
+    private final ResultManager wiNRResultManager = new WiNRResultManager();
 
     private int asyncCheck = 0;
 
