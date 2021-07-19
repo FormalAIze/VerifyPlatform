@@ -1,7 +1,7 @@
 package lab.nnverify.platform.verifyplatform.controller;
 
 import lab.nnverify.platform.verifyplatform.models.ResponseEntity;
-import lab.nnverify.platform.verifyplatform.models.Verification;
+import lab.nnverify.platform.verifyplatform.models.WiNRVerification;
 import lab.nnverify.platform.verifyplatform.services.VerificationService;
 import lab.nnverify.platform.verifyplatform.verifykit.winr.WiNRKit;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +44,7 @@ public class WiNRController {
     @CrossOrigin(origins = "*")
     @GetMapping("/winr/verification")
     public ResponseEntity fetchVerificationResult(@RequestParam String verifyId) throws IOException {
-        Verification verification = verificationService.fetchVerificationById(verifyId);
+        WiNRVerification verification = verificationService.fetchVerificationById(verifyId);
         ResponseEntity response = new ResponseEntity();
         wiNRKit.setParams(verification);
         Map<String, String> result = wiNRKit.getResultSync();
@@ -79,7 +79,7 @@ public class WiNRController {
             response.setMsg("no verify id provided");
             return response;
         }
-        Verification verificationParams = new Verification(verifyId, userId, "WiNR", (String) params.get("epsilon"),
+        WiNRVerification verificationParams = new WiNRVerification(verifyId, userId, "WiNR", (String) params.get("epsilon"),
                 (String) params.get("model"), (String) params.get("dataset"), (String) params.get("imageNum"),
                 "ready", null);
         setTimestamp(verificationParams);
@@ -101,7 +101,7 @@ public class WiNRController {
         return response;
     }
 
-    private void setTimestamp(Verification verification) {
+    private void setTimestamp(WiNRVerification verification) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         simpleDateFormat.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"));
         verification.setStartTime(Timestamp.valueOf(simpleDateFormat.format(new Date())));

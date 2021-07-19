@@ -9,10 +9,11 @@ import java.sql.Timestamp;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Verification {
+public class WiNRVerification {
     private String verifyId;
     private int userId;
     private String tool;
+
     private String epsilon;
     private String netName;
     private String dataset;

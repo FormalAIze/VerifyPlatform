@@ -1,7 +1,7 @@
 package lab.nnverify.platform.verifyplatform.verifykit.winr;
 
 import lab.nnverify.platform.verifyplatform.config.WebSocketSessionManager;
-import lab.nnverify.platform.verifyplatform.models.Verification;
+import lab.nnverify.platform.verifyplatform.models.WiNRVerification;
 import lab.nnverify.platform.verifyplatform.services.VerificationService;
 import lab.nnverify.platform.verifyplatform.verifykit.TaskExecuteListener;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +11,6 @@ import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.*;
@@ -32,7 +31,7 @@ public class WiNRKit {
 
     private int runStatus = 1;
 
-    private Verification params = null;
+    private WiNRVerification params = null;
 
     private WebSocketSession session = null;
 
@@ -43,7 +42,7 @@ public class WiNRKit {
     public WiNRKit() {
     }
 
-    public void setParams(Verification params) {
+    public void setParams(WiNRVerification params) {
         this.params = params;
     }
 
