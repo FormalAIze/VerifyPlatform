@@ -28,8 +28,8 @@ public class UserController {
 
     @GetMapping("/user/info")
     public ResponseEntity getUserInfo(@RequestHeader("Authorization") String token) {
-        log.info("token: " + token);
-        String username = jwtUtil.extractUsername(token);
+        String jwt = token.substring(7);
+        String username = jwtUtil.extractUsername(jwt);
         UserModel userModel = myUserDetailsService.fetchUserByUsername(username);
         ResponseEntity response = new ResponseEntity();
         response.setStatus(200);
