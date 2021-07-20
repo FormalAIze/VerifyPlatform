@@ -15,6 +15,16 @@ public class VerifastResultManager extends ResultManager {
     private String resultFilepathMock = "./mock.txt";
 
     @Override
+    public String getLogPath() {
+        return null;
+    }
+
+    @Override
+    public String getAdvExamplePath() {
+        return null;
+    }
+
+    @Override
     public InputStreamReader getResultFile(String verifyId) {
         try {
             return new InputStreamReader(new FileInputStream(resultFilepathMock));

@@ -2,7 +2,7 @@ package lab.nnverify.platform.verifyplatform.controller;
 
 import lab.nnverify.platform.verifyplatform.models.AuthenticationRequest;
 import lab.nnverify.platform.verifyplatform.models.ResponseEntity;
-import lab.nnverify.platform.verifyplatform.models.Verification;
+import lab.nnverify.platform.verifyplatform.models.WiNRVerification;
 import lab.nnverify.platform.verifyplatform.services.VerificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +46,7 @@ public class UserController {
     @GetMapping("/user/{userId}/history")
     public ResponseEntity userVerificationHistory(@PathVariable Integer userId) {
         ResponseEntity response = new ResponseEntity();
-        List<Verification> history = verificationService.findVerificationHistoryByUserId(userId);
+        List<WiNRVerification> history = verificationService.findVerificationHistoryByUserId(userId);
         if (!history.isEmpty()) {
             response.setStatus(200);
         } else {
@@ -59,7 +59,7 @@ public class UserController {
 //    测试用
 //    @GetMapping("/user/{userId}/add/verify")
 //    public ResponseEntity addVerification(@PathVariable Integer userId) {
-//        Verification verification = new Verification("123", 1, "WiNR", "0.1", "mnist", "mnist", "2", "running");
+//        WiNRVerification verification = new WiNRVerification("123", 1, "WiNR", "0.1", "mnist", "mnist", "2", "running");
 //        verificationService.saveVerificationParams(verification);
 //        return new ResponseEntity();
 //    }
