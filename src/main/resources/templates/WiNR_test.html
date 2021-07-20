@@ -35,6 +35,7 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0.01"><br>
 <!--<button onclick="formTest()">FormTest</button>-->
 <!--<button onclick="startTestMock()">StartMock</button>-->
 <button onclick="startTest()">开始验证</button>
+<button onclick="startTestDeepCert()">开始deepcert测试</button>
 <!--<button onclick="closeWebSocket()">Close</button>-->
 <!--<div id="terminal"-->
 <!--     style="width: 80%; height: 400px; margin: 20px auto;background: antiquewhite;overflow: auto; padding: 20px 10px">-->
@@ -175,7 +176,7 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0.01"><br>
     function fetchVerificationResult(verifyId) {
         reset()
         $("#loading").animate({opacity: "1"})
-        $.get("http://" + base_url + "/winr/verification", {
+        $.get("http://" + base_url + "/verify/verification", {
             verifyId: verifyId
         }, function (data) {
             $("#loading").animate({opacity: "0"});
@@ -187,11 +188,53 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0.01"><br>
             console.log(resultFile)
             console.log("verify id is: " + data.data.verifyId)
             $("#result-content").html("<p>" + resultFileString + "</p>");
-            for (var advExample of data.data.advExamples) {
-                var filename = "http://" + base_url + "/winr/adv_image/" + advExample
-                $("#adv-image-area").append("<div class=\"adv-image\"><img src=\"" + filename + "\"/><p>" + advExample + "</p></div>")
-            }
+            // for (var advExample of data.data.advExamples) {
+            //     var filename = "http://" + base_url + "/winr/adv_image/" + advExample
+            //     $("#adv-image-area").append("<div class=\"adv-image\"><img src=\"" + filename + "\"/><p>" + advExample + "</p></div>")
+            // }
         });
+    }
+
+    function startTestDeepCert() {
+        reset()
+
+        var verifyId = "1"
+
+        $("#loading").animate({opacity: "1"})
+        $.get("http://" + base_url + "/verify/verify_id", function (data) {
+            verifyId = data.data.verifyId
+            console.log("verify id is: " + verifyId)
+            if (verifyId === "1") {
+                alert("获取verify id失败，验证终止");
+                // 没有获取到verify ID时不进行验证
+            } else {
+                const netName = "models/mnist_cnn_8layer_5_3_sigmoid";
+                const numOfImage = "2";
+                const norm = "i";
+                const core = "True";
+                const activation = "sigmoid";
+                const isCifar = "False";
+                const isTinyImageNet = "False"
+
+                $.post("http://" + base_url + "/verify/deepcert/" + userID, {
+                    verifyId: verifyId,
+                    netName: netName,
+                    numOfImage: numOfImage,
+                    norm: norm,
+                    core: core,
+                    activation: activation,
+                    isCifar: isCifar,
+                    isTinyImageNet: isTinyImageNet
+                }, function (data) {
+                    console.log(data)
+                    if (data.status === 200) {
+                        console.log("verification start successfully");
+                    } else {
+                        console.log("verification start failed");
+                    }
+                })
+            }
+        })
     }
 
     function startTest() {
@@ -200,7 +243,7 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0.01"><br>
         var verifyId = "1"
 
         $("#loading").animate({opacity: "1"})
-        $.get("http://" + base_url + "/winr/verify_id", function (data) {
+        $.get("http://" + base_url + "/verify/verify_id", function (data) {
             verifyId = data.data.verifyId
             console.log("verify id is: " + verifyId)
             if (verifyId === "1") {
@@ -212,7 +255,7 @@ Epsilon: <input id="input-epsilon" type="text" name="epsilon" value="0.01"><br>
                 const model = $("#input-model option:selected");
                 const imageNum = $("#input-image-num");
 
-                $.post("http://" + base_url + "/winr/verify/" + userID, {
+                $.post("http://" + base_url + "/verify/winr/" + userID, {
                     verifyId: verifyId,
                     dataset: dataset.val(),
                     epsilon: epsilon.val(),

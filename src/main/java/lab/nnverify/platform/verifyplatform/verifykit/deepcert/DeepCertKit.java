@@ -1,7 +1,7 @@
-package lab.nnverify.platform.verifyplatform.verifykit.winr;
+package lab.nnverify.platform.verifyplatform.verifykit.deepcert;
 
 import lab.nnverify.platform.verifyplatform.config.WebSocketSessionManager;
-import lab.nnverify.platform.verifyplatform.models.WiNRVerification;
+import lab.nnverify.platform.verifyplatform.models.DeepCertVerification;
 import lab.nnverify.platform.verifyplatform.services.VerificationService;
 import lab.nnverify.platform.verifyplatform.verifykit.ResultManager;
 import lab.nnverify.platform.verifyplatform.verifykit.TaskExecuteListener;
@@ -17,7 +17,6 @@ import org.springframework.web.socket.WebSocketSession;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,34 +25,30 @@ import java.util.Map;
 @Slf4j
 @Service
 @Scope(value = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
-public class WiNRKit {
+public class DeepCertKit {
     @Autowired
     VerificationService verificationService;
 
+    public DeepCertKit() {
+    }
+
     private int runStatus = 1;
-
-    private WiNRVerification params = null;
-
-    private WebSocketSession session = null;
-
-    private final ResultManager wiNRResultManager = new WiNRResultManager();
 
     private int asyncCheck = 0;
 
-    public WiNRKit() {
-    }
+    private WebSocketSession session = null;
 
-    public void setParams(WiNRVerification params) {
-        this.params = params;
-    }
+    private DeepCertVerification params = null;
+
+    private final ResultManager deepCertResultManager = new DeepCertResultManager();
 
     private TaskExecuteListener taskExecuteListener = new TaskExecuteListener() {
         @Override
         public void beforeTaskExecute() {
-            log.info("-----beforeWiNRTaskExecute-----");
+            log.info("-----beforeTaskExecute-----");
             asyncCheck++;
             params.setStatus("running");
-            if (verificationService.saveWiNRVerificationParams(params)) {
+            if (verificationService.saveDeepCertVerificationParams(params)) {
                 log.info("write verification record to database");
             } else {
                 log.error("fail to write verification record to database");
@@ -63,15 +58,12 @@ public class WiNRKit {
 
         @Override
         public void afterTaskExecute() {
-            log.info("-----afterWiNRTaskExecute-----");
+            log.info("-----afterTaskExecute-----");
             // 创建一个锚点 方便之后通过verify_id查找文件
             String verifyId = params.getVerifyId();
             log.info("verify id after task: " + verifyId);
-            if (!wiNRResultManager.createResultFileAnchor(verifyId)) {
+            if (!deepCertResultManager.createResultFileAnchor(verifyId)) {
                 log.error("anchor create failed: result file anchor create failed, verifyId is " + verifyId);
-            }
-            if (!wiNRResultManager.createAdvExampleAnchor(verifyId)) {
-                log.error("anchor create failed: advExample file anchor create failed, verifyId is " + verifyId);
             }
             if (runStatus == 0) {
                 verificationService.finishVerificationUpdateStatus(verifyId, "success");
@@ -91,12 +83,16 @@ public class WiNRKit {
         }
     };
 
+    public void setParams(DeepCertVerification params) {
+        this.params = params;
+    }
+
     public Map<String, String> getResultSync() throws IOException {
         String verifyId = params.getVerifyId();
         if (!params.getStatus().equals("success")) {
             return new HashMap<>();
         }
-        InputStreamReader file = wiNRResultManager.getResultFile(verifyId);
+        InputStreamReader file = deepCertResultManager.getResultFile(verifyId);
         if (file == null) {
             return new HashMap<>();
         }
@@ -106,21 +102,18 @@ public class WiNRKit {
         while ((line = reader.readLine()) != null) {
             result.add(line);
         }
-        String[] secondLastLine = result.get(result.size() - 2).split("\\s+");
-        String[] lastLine = result.get(result.size() - 1).split("\\s+");
         HashMap<String, String> resultMap = new HashMap<>();
-        for (int i = 0; i < secondLastLine.length; i++) {
-            String key = secondLastLine[i];
-            resultMap.put(key, lastLine[i]);
+
+        String[] split = result.get(1).split(",");
+        for (String s : split) {
+            String[] split1 = s.trim().split("=");
+            resultMap.put(split1[0].trim().replace(" ", "_"), split1[1].trim());
+        }
+        for (int i = 2; i < result.size(); i++) {
+            String[] split1 = result.get(i).split("=");
+            resultMap.put(split1[0].trim().replace(" ", "_"), split1[1].trim());
         }
         return resultMap;
-    }
-
-    public List<String> getAdvExample(int image_num) {
-        String verifyId = params.getVerifyId();
-
-        List<String> advExamples = wiNRResultManager.getAdvExample(verifyId, image_num);
-        return advExamples;
     }
 
     public int testAsync() {
@@ -141,23 +134,42 @@ public class WiNRKit {
         return 1;
     }
 
-    private boolean paramsCheck() {
-        return true;
-    }
-
     private void task() {
-        String dataset = params.getDataset();
-        String epsilon = params.getEpsilon();
-        String model = params.getNetName();
-        String imageNum = params.getNumOfImage();
+        String netName = params.getNetName();
+        String core = params.getCore();
+        String numOfImage = params.getNumOfImage();
+        String norm = params.getNorm();
+        String activation = params.getActivation();
+        String isCifar = params.getIsCifar();
+        String isTinyImageNet = params.getIsTinyImageNet();
 
         try {
-            PrintWriter printWriter = new PrintWriter(WiNRConfig.basicPath + "run.sh");
+            PrintWriter printWriter = new PrintWriter(DeepCertConfig.basicPath + "run.sh");
+            // python pymain.py models/mnist_cnn_8layer_5_3_sigmoid 10 i True sigmoid False False
             String command = String.format(
-                    "python main.py --netname %s --epsilon %s --dataset %s --num_image %s",
-                    model, epsilon, dataset, imageNum);
+                    "python pymain.py %s %s %s %s %s %s %s",
+                    netName, numOfImage, norm, core, activation, isCifar, isTinyImageNet);
             log.info("the command is " + command);
-            printWriter.write(command);
+            ArrayList<String> commends = new ArrayList<>();
+            commends.add("# >>> conda initialize >>>");
+            commends.add("# !! Contents within this block are managed by 'conda init' !!");
+            commends.add("__conda_setup=\"$('/home/GuoXingWu/anaconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)\"");
+            commends.add("if [ $? -eq 0 ]; then");
+            commends.add("    eval \"$__conda_setup\"");
+            commends.add("else");
+            commends.add("    if [ -f \"/home/GuoXingWu/anaconda3/etc/profile.d/conda.sh\" ]; then");
+            commends.add("        . \"/home/GuoXingWu/anaconda3/etc/profile.d/conda.sh\"");
+            commends.add("    else");
+            commends.add("        export PATH=\"/home/GuoXingWu/anaconda3/bin:$PATH\"");
+            commends.add("    fi");
+            commends.add("fi");
+            commends.add("unset __conda_setup");
+            commends.add("# <<< conda initialize <<<");
+            commends.add("conda activate deepcert");
+            commends.add(command);
+            for (String s : commends) {
+                printWriter.println(s);
+            }
             printWriter.flush();
             printWriter.close();
         } catch (FileNotFoundException e) {
@@ -166,7 +178,7 @@ public class WiNRKit {
         }
 
         ProcessBuilder processBuilder = new ProcessBuilder("./run.sh");
-        processBuilder.directory(new File(WiNRConfig.basicPath));
+        processBuilder.directory(new File(DeepCertConfig.basicPath));
         processBuilder.redirectErrorStream(true);
         try {
             Process process = processBuilder.start();
@@ -180,4 +192,9 @@ public class WiNRKit {
             e.printStackTrace();
         }
     }
+
+    private boolean paramsCheck() {
+        return true;
+    }
+
 }

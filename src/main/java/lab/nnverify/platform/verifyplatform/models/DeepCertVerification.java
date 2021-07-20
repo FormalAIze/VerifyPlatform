@@ -7,17 +7,20 @@ import lombok.NoArgsConstructor;
 import java.sql.Timestamp;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class WiNRVerification {
+@AllArgsConstructor
+public class DeepCertVerification {
     private String verifyId;
     private int userId;
     private String tool;
 
-    private String epsilon;
     private String netName;
-    private String dataset;
     private String numOfImage;
+    private String norm;
+    private String core;
+    private String activation;
+    private String isCifar;
+    private String isTinyImageNet;
 
     // 四种状态: ready, running, success, error
     private String status;
