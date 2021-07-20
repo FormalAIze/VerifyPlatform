@@ -2,8 +2,11 @@ package lab.nnverify.platform.verifyplatform.controller;
 
 import lab.nnverify.platform.verifyplatform.models.AuthenticationRequest;
 import lab.nnverify.platform.verifyplatform.models.ResponseEntity;
+import lab.nnverify.platform.verifyplatform.models.UserModel;
+import lab.nnverify.platform.verifyplatform.services.MyUserDetailsService;
 import lab.nnverify.platform.verifyplatform.models.WiNRVerification;
 import lab.nnverify.platform.verifyplatform.services.VerificationService;
+import lab.nnverify.platform.verifyplatform.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -17,12 +20,21 @@ public class UserController {
     @Autowired
     VerificationService verificationService;
 
+    @Autowired
+    JwtUtil jwtUtil;
+
+    @Autowired
+    MyUserDetailsService myUserDetailsService;
+
     @GetMapping("/user/info")
     public ResponseEntity getUserInfo(@RequestHeader("Authorization") String token) {
-        log.info("token: " + token);
+        String jwt = token.substring(7);
+        String username = jwtUtil.extractUsername(jwt);
+        UserModel userModel = myUserDetailsService.fetchUserByUsername(username);
         ResponseEntity response = new ResponseEntity();
         response.setStatus(200);
-        response.getData().put("name", "Super admin");
+        response.getData().put("name", userModel.getUsername());
+        response.getData().put("userId", userModel.getId());
         response.getData().put("avatar", "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif");
         return response;
     }

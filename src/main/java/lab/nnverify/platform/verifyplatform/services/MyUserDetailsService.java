@@ -21,4 +21,8 @@ public class MyUserDetailsService implements UserDetailsService {
         UserModel user = userMapper.fetchUserByName(s);
         return new User(user.getUsername(), user.getPassword(), new ArrayList<>());
     }
+
+    public UserModel fetchUserByUsername(String s) {
+        return userMapper.fetchUserByName(s);
+    }
 }
