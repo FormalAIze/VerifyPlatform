@@ -1,6 +1,7 @@
 package lab.nnverify.platform.verifyplatform.services;
 
 import lab.nnverify.platform.verifyplatform.mapper.VerificationMapper;
+import lab.nnverify.platform.verifyplatform.models.AllParamsVerification;
 import lab.nnverify.platform.verifyplatform.models.DeepCertVerification;
 import lab.nnverify.platform.verifyplatform.models.WiNRVerification;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +14,7 @@ public class VerificationService {
     @Autowired
     VerificationMapper verificationMapper;
 
-    public List<WiNRVerification> findVerificationHistoryByUserId(Integer userId) {
+    public List<AllParamsVerification> findVerificationHistoryByUserId(Integer userId) {
         return verificationMapper.fetchVerificationByUserId(userId);
     }
 

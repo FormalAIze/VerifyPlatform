@@ -1,10 +1,7 @@
 package lab.nnverify.platform.verifyplatform.controller;
 
-import lab.nnverify.platform.verifyplatform.models.AuthenticationRequest;
-import lab.nnverify.platform.verifyplatform.models.ResponseEntity;
-import lab.nnverify.platform.verifyplatform.models.UserModel;
+import lab.nnverify.platform.verifyplatform.models.*;
 import lab.nnverify.platform.verifyplatform.services.MyUserDetailsService;
-import lab.nnverify.platform.verifyplatform.models.WiNRVerification;
 import lab.nnverify.platform.verifyplatform.services.VerificationService;
 import lab.nnverify.platform.verifyplatform.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +55,7 @@ public class UserController {
     @GetMapping("/user/{userId}/history")
     public ResponseEntity userVerificationHistory(@PathVariable Integer userId) {
         ResponseEntity response = new ResponseEntity();
-        List<WiNRVerification> history = verificationService.findVerificationHistoryByUserId(userId);
+        List<AllParamsVerification> history = verificationService.findVerificationHistoryByUserId(userId);
         if (!history.isEmpty()) {
             response.setStatus(200);
         } else {

@@ -1,5 +1,6 @@
 package lab.nnverify.platform.verifyplatform.mapper;
 
+import lab.nnverify.platform.verifyplatform.models.AllParamsVerification;
 import lab.nnverify.platform.verifyplatform.models.DeepCertVerification;
 import lab.nnverify.platform.verifyplatform.models.WiNRVerification;
 import org.apache.ibatis.annotations.Insert;
@@ -11,8 +12,9 @@ import java.util.List;
 
 @Mapper
 public interface VerificationMapper {
-    @Select("select verify_id,user_id,tool,epsilon,dataset,num_of_image,net_name,status,start_time from verification where user_id=#{userId}")
-    List<WiNRVerification> fetchVerificationByUserId(Integer userId);
+    @Select("select verify_id,user_id,tool,num_of_image,net_name,norm,core,activation,is_cifar,is_tiny_image_net,epsilon,dataset,status,start_time " +
+            "from verification where user_id=#{userId} order by start_time desc")
+    List<AllParamsVerification> fetchVerificationByUserId(Integer userId);
 
     @Insert("insert into verification(verify_id,user_id,tool,epsilon,dataset,num_of_image,net_name,status,start_time) values " +
             "(#{verifyId},#{userId},#{tool},#{epsilon},#{dataset},#{numOfImage},#{netName},#{status},#{startTime})")
