@@ -10,8 +10,8 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-public class ImageService {
-    public boolean saveImage(MultipartFile image, String path) {
+public class FileService {
+    public boolean saveFile(MultipartFile file, String path) {
         log.info("the save path is: " + path);
         File dest = new File(path);
         if (!dest.getParentFile().exists()) {
@@ -21,7 +21,7 @@ public class ImageService {
             }
         }
         try {
-            image.transferTo(dest);
+            file.transferTo(dest);
             return true;
         } catch (IOException e) {
             e.printStackTrace();

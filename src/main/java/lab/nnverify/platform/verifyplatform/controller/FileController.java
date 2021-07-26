@@ -1,7 +1,7 @@
 package lab.nnverify.platform.verifyplatform.controller;
 
 import lab.nnverify.platform.verifyplatform.models.ResponseEntity;
-import lab.nnverify.platform.verifyplatform.services.ImageService;
+import lab.nnverify.platform.verifyplatform.services.FileService;
 import lab.nnverify.platform.verifyplatform.verifykit.winr.WiNRConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,17 +17,23 @@ import java.util.ArrayList;
 
 @Slf4j
 @Controller
-public class ImageController {
+public class FileController {
     @Autowired
-    ImageService imageService;
+    FileService fileService;
 
     private final String wiNRBasePath = WiNRConfig.basicPath + "adv_examples/";
 
-    @Value("${winr.file.upload.url}")
-    private String uploadFilepathWiNR;
+    @Value("${winr.file.upload.image}")
+    private String uploadImageFilepathWiNR;
 
-    @Value("${deepcert.file.upload.url}")
-    private String uploadFilepathDeepcert;
+    @Value("${deepcert.file.upload.image}")
+    private String uploadImageFilepathDeepcert;
+
+    @Value(("${winr.file.upload.model}"))
+    private String uploadModelFilepathWiNR;
+
+    @Value(("${deepcert.file.upload.model}"))
+    private String uploadModelFilepathDeepcert;
 
     @CrossOrigin(origins = "*")
     @GetMapping(value = "/winr/adv_image/{filename}", produces = MediaType.IMAGE_PNG_VALUE)
@@ -54,9 +60,9 @@ public class ImageController {
             return response;
         }
         for (MultipartFile image : images) {
-            String uuidFileName = imageService.generateUUidFilename(image);
-            String destPath = uploadFilepathDeepcert + "/" + uuidFileName;
-            if (imageService.saveImage(image, destPath)) {
+            String uuidFileName = fileService.generateUUidFilename(image);
+            String destPath = uploadImageFilepathDeepcert + "/" + uuidFileName;
+            if (fileService.saveFile(image, destPath)) {
                 imageNames.add(destPath);
                 successCount++;
             } else {
@@ -84,9 +90,9 @@ public class ImageController {
             return response;
         }
         for (MultipartFile image : images) {
-            String uuidFileName = imageService.generateUUidFilename(image);
-            String destPath = uploadFilepathWiNR + "/" + uuidFileName;
-            if (imageService.saveImage(image, destPath)) {
+            String uuidFileName = fileService.generateUUidFilename(image);
+            String destPath = uploadImageFilepathWiNR + "/" + uuidFileName;
+            if (fileService.saveFile(image, destPath)) {
                 imageNames.add(destPath);
                 successCount++;
             } else {
@@ -97,6 +103,23 @@ public class ImageController {
         response.setStatus(successCount == 0 ? -510 : 200);
         response.getData().put("successSave", successCount);
         response.getData().put("imageUpload", imageCount);
+        return response;
+    }
+
+    @CrossOrigin(origins = "*")
+    @PostMapping("/deepcert/images")
+    @ResponseBody
+    public ResponseEntity wiNRModelUpload(@RequestParam("modelFile") MultipartFile model) {
+        ResponseEntity response = new ResponseEntity();
+        String uuidFileName = fileService.generateUUidFilename(model);
+        String destPath = uploadModelFilepathWiNR + "/" + uuidFileName;
+        if (fileService.saveFile(model, destPath)) {
+            response.setStatus(200);
+            response.getData().put("modelFilepath", destPath);
+        } else {
+            response.setStatus(-510);
+            response.setMsg("save model failed");
+        }
         return response;
     }
 }
