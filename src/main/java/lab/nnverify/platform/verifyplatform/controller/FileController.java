@@ -21,16 +21,14 @@ public class FileController {
     @Autowired
     FileService fileService;
 
-    private final String wiNRBasePath = WiNRConfig.basicPath + "adv_examples/";
+    private final String wiNRAdvPath = WiNRConfig.basicPath + "adv_examples/";
 
-    @Value("${winr.file.upload.image}")
-    private String uploadImageFilepathWiNR;
+    private final String uploadImageFilepathWiNR = WiNRConfig.uploadImageFilepathWiNR;
 
     @Value("${deepcert.file.upload.image}")
     private String uploadImageFilepathDeepcert;
 
-    @Value(("${winr.file.upload.model}"))
-    private String uploadModelFilepathWiNR;
+    private final String uploadModelFilepathWiNR = WiNRConfig.uploadModelFilepathWiNR;
 
     @Value(("${deepcert.file.upload.model}"))
     private String uploadModelFilepathDeepcert;
@@ -39,7 +37,18 @@ public class FileController {
     @GetMapping(value = "/winr/adv_image/{filename}", produces = MediaType.IMAGE_PNG_VALUE)
     @ResponseBody
     public byte[] wiNRAdvExample(@PathVariable String filename) throws Exception {
-        File file = new File(wiNRBasePath + filename);
+        File file = new File(wiNRAdvPath + filename);
+        FileInputStream inputStream = new FileInputStream(file);
+        byte[] bytes = new byte[inputStream.available()];
+        inputStream.read(bytes, 0, inputStream.available());
+        return bytes;
+    }
+
+    @CrossOrigin(origins = "*")
+    @GetMapping(value = "/winr/image/{filename}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
+    @ResponseBody
+    public byte[] wiNRFetchImage(@PathVariable String filename) throws Exception {
+        File file = new File(uploadImageFilepathWiNR + filename);
         FileInputStream inputStream = new FileInputStream(file);
         byte[] bytes = new byte[inputStream.available()];
         inputStream.read(bytes, 0, inputStream.available());
@@ -61,12 +70,12 @@ public class FileController {
         }
         for (MultipartFile image : images) {
             String uuidFileName = fileService.generateUUidFilename(image);
-            String destPath = uploadImageFilepathDeepcert + "/" + uuidFileName;
+            String destPath = uploadImageFilepathWiNR + uuidFileName;
             if (fileService.saveFile(image, destPath)) {
-                imageNames.add(destPath);
+                imageNames.add(uuidFileName);
                 successCount++;
             } else {
-                log.error("iamge save failed, filename is: " + destPath);
+                log.error("image save failed, filename is: " + destPath);
             }
         }
         response.getData().put("imageNames", imageNames);
@@ -91,9 +100,9 @@ public class FileController {
         }
         for (MultipartFile image : images) {
             String uuidFileName = fileService.generateUUidFilename(image);
-            String destPath = uploadImageFilepathWiNR + "/" + uuidFileName;
+            String destPath = uploadImageFilepathDeepcert + uuidFileName;
             if (fileService.saveFile(image, destPath)) {
-                imageNames.add(destPath);
+                imageNames.add(uuidFileName);
                 successCount++;
             } else {
                 log.error("iamge save failed, filename is: " + destPath);
@@ -107,15 +116,15 @@ public class FileController {
     }
 
     @CrossOrigin(origins = "*")
-    @PostMapping("/deepcert/images")
+    @PostMapping("/winr/model")
     @ResponseBody
     public ResponseEntity wiNRModelUpload(@RequestParam("modelFile") MultipartFile model) {
         ResponseEntity response = new ResponseEntity();
         String uuidFileName = fileService.generateUUidFilename(model);
-        String destPath = uploadModelFilepathWiNR + "/" + uuidFileName;
+        String destPath = uploadModelFilepathWiNR + uuidFileName;
         if (fileService.saveFile(model, destPath)) {
             response.setStatus(200);
-            response.getData().put("modelFilepath", destPath);
+            response.getData().put("modelFilepath", uuidFileName);
         } else {
             response.setStatus(-510);
             response.setMsg("save model failed");
