@@ -143,6 +143,12 @@ public class VerificationController {
             response.setMsg("no verify id provided");
             return response;
         }
+        // 保存用户上传的验证图片信息到数据库
+        Map<String, String> testImageInfo = (Map<String, String>) params.get("testImageInfo");
+        int successSaveCount = verificationService.saveTestImageOfVerification(verifyId, testImageInfo);
+        log.info("verification test images saved. " + successSaveCount + "/" + testImageInfo.keySet().size());
+        // todo model信息也需要存到数据库，可能也需要修改
+        // todo 需要修改以配合工具
         WiNRVerification verificationParams = new WiNRVerification(verifyId, userId, "WiNR", (String) params.get("epsilon"),
                 (String) params.get("model"), (String) params.get("dataset"), (String) params.get("imageNum"),
                 "ready", getNowTimestamp());

@@ -36,4 +36,7 @@ public interface VerificationMapper {
     @Select("select verify_id,user_id,tool,net_name,num_of_image,norm,core,activation,is_cifar,is_tiny_image_net,status,start_time " +
             "from verification where verify_id=#{verifyId}")
     DeepCertVerification fetchDeepCertVerificationById(String verifyId);
+
+    @Insert("insert into verify_image(verify_id,image_name,label) values (#{verifyId},#{filename},#{label})")
+    int saveTestImageOfVerification(String verifyId, String filename, String label);
 }

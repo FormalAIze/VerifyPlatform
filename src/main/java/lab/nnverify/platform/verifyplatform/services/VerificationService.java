@@ -9,11 +9,21 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class VerificationService {
     @Autowired
     VerificationMapper verificationMapper;
+
+    public int saveTestImageOfVerification(String verifyId, Map<String, String> testImageInfo) {
+        int successCount = 0;
+        for (String filename : testImageInfo.keySet()) {
+            String label = testImageInfo.get(filename);
+            successCount += verificationMapper.saveTestImageOfVerification(verifyId, filename, label);
+        }
+        return successCount;
+    }
 
     public List<AllParamsVerification> findVerificationHistoryByUserId(Integer userId) {
         List<AllParamsVerification> verifications = verificationMapper.fetchVerificationByUserId(userId);
