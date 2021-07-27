@@ -2,6 +2,8 @@ package lab.nnverify.platform.verifyplatform.controller;
 
 import lab.nnverify.platform.verifyplatform.models.ResponseEntity;
 import lab.nnverify.platform.verifyplatform.services.FileService;
+import lab.nnverify.platform.verifyplatform.verifykit.deepcert.DeepCertConfig;
+import lab.nnverify.platform.verifyplatform.verifykit.deepcert.DeepCertKit;
 import lab.nnverify.platform.verifyplatform.verifykit.winr.WiNRConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,22 +23,17 @@ public class FileController {
     @Autowired
     FileService fileService;
 
-    private final String wiNRAdvPath = WiNRConfig.basicPath + "adv_examples/";
+    @Autowired
+    WiNRConfig wiNRConfig;
 
-    private final String uploadImageFilepathWiNR = WiNRConfig.uploadImageFilepathWiNR;
-
-    @Value("${deepcert.file.upload.image}")
-    private String uploadImageFilepathDeepcert;
-
-    private final String uploadModelFilepathWiNR = WiNRConfig.uploadModelFilepathWiNR;
-
-    @Value(("${deepcert.file.upload.model}"))
-    private String uploadModelFilepathDeepcert;
+    @Autowired
+    DeepCertConfig deepCertConfig;
 
     @CrossOrigin(origins = "*")
     @GetMapping(value = "/winr/adv_image/{filename}", produces = MediaType.IMAGE_PNG_VALUE)
     @ResponseBody
     public byte[] wiNRAdvExample(@PathVariable String filename) throws Exception {
+        String wiNRAdvPath = wiNRConfig.getBasicPath() + "adv_examples/";
         File file = new File(wiNRAdvPath + filename);
         FileInputStream inputStream = new FileInputStream(file);
         byte[] bytes = new byte[inputStream.available()];
@@ -48,7 +45,7 @@ public class FileController {
     @GetMapping(value = "/winr/image/{filename}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
     @ResponseBody
     public byte[] wiNRFetchImage(@PathVariable String filename) throws Exception {
-        File file = new File(uploadImageFilepathWiNR + filename);
+        File file = new File(wiNRConfig.getUploadImageFilepathWiNR() + filename);
         FileInputStream inputStream = new FileInputStream(file);
         byte[] bytes = new byte[inputStream.available()];
         inputStream.read(bytes, 0, inputStream.available());
@@ -70,7 +67,7 @@ public class FileController {
         }
         for (MultipartFile image : images) {
             String uuidFileName = fileService.generateUUidFilename(image);
-            String destPath = uploadImageFilepathWiNR + uuidFileName;
+            String destPath = wiNRConfig.getUploadImageFilepathWiNR() + uuidFileName;
             if (fileService.saveFile(image, destPath)) {
                 imageNames.add(uuidFileName);
                 successCount++;
@@ -100,7 +97,7 @@ public class FileController {
         }
         for (MultipartFile image : images) {
             String uuidFileName = fileService.generateUUidFilename(image);
-            String destPath = uploadImageFilepathDeepcert + uuidFileName;
+            String destPath = deepCertConfig.getUploadImageFilepathDeepcert() + uuidFileName;
             if (fileService.saveFile(image, destPath)) {
                 imageNames.add(uuidFileName);
                 successCount++;
@@ -121,7 +118,7 @@ public class FileController {
     public ResponseEntity wiNRModelUpload(@RequestParam("modelFile") MultipartFile model) {
         ResponseEntity response = new ResponseEntity();
         String uuidFileName = fileService.generateUUidFilename(model);
-        String destPath = uploadModelFilepathWiNR + uuidFileName;
+        String destPath = wiNRConfig.getUploadModelFilepathWiNR() + uuidFileName;
         if (fileService.saveFile(model, destPath)) {
             response.setStatus(200);
             response.getData().put("modelFilepath", uuidFileName);
