@@ -2,23 +2,28 @@ package lab.nnverify.platform.verifyplatform.verifykit.winr;
 
 import lab.nnverify.platform.verifyplatform.verifykit.ResultManager;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
+@Component
 public class WiNRResultManager extends ResultManager {
-    private final String basicPath = WiNRConfig.basicPath;
+
+    @Autowired
+    WiNRConfig wiNRConfig;
 
     @Override
     public String getLogPath() {
-        return basicPath + "logs/";
+        return wiNRConfig.getBasicPath() + "logs/";
     }
 
     @Override
     public String getAdvExamplePath() {
-        return basicPath + "adv_examples/";
+        return wiNRConfig.getBasicPath() + "adv_examples/";
     }
 
     @Override

@@ -7,6 +7,7 @@ import lab.nnverify.platform.verifyplatform.verifykit.ResultManager;
 import lab.nnverify.platform.verifyplatform.verifykit.TaskExecuteListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,12 @@ public class DeepCertKit {
     @Autowired
     VerificationService verificationService;
 
+    @Autowired
+    DeepCertConfig deepCertConfig;
+
+    @Autowired
+    @Qualifier("deepCertResultManager") ResultManager deepCertResultManager;
+
     public DeepCertKit() {
     }
 
@@ -39,8 +46,6 @@ public class DeepCertKit {
     private WebSocketSession session = null;
 
     private DeepCertVerification params = null;
-
-    private final ResultManager deepCertResultManager = new DeepCertResultManager();
 
     private TaskExecuteListener taskExecuteListener = new TaskExecuteListener() {
         @Override
@@ -144,7 +149,7 @@ public class DeepCertKit {
         String isTinyImageNet = params.getIsTinyImageNet();
 
         try {
-            PrintWriter printWriter = new PrintWriter(DeepCertConfig.basicPath + "run.sh");
+            PrintWriter printWriter = new PrintWriter(deepCertConfig.getBasicPath() + "run.sh");
             // python pymain.py models/mnist_cnn_8layer_5_3_sigmoid 10 i True sigmoid False False
             String command = String.format(
                     "python pymain.py %s %s %s %s %s %s %s",
@@ -178,7 +183,7 @@ public class DeepCertKit {
         }
 
         ProcessBuilder processBuilder = new ProcessBuilder("./run.sh");
-        processBuilder.directory(new File(DeepCertConfig.basicPath));
+        processBuilder.directory(new File(deepCertConfig.getBasicPath()));
         processBuilder.redirectErrorStream(true);
         try {
             Process process = processBuilder.start();

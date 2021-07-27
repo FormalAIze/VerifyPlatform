@@ -7,6 +7,7 @@ import lab.nnverify.platform.verifyplatform.verifykit.ResultManager;
 import lab.nnverify.platform.verifyplatform.verifykit.TaskExecuteListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
@@ -30,13 +31,17 @@ public class WiNRKit {
     @Autowired
     VerificationService verificationService;
 
+    @Autowired
+    WiNRConfig wiNRConfig;
+
+    @Autowired
+    @Qualifier("wiNRResultManager") ResultManager wiNRResultManager;
+
     private int runStatus = 1;
 
     private WiNRVerification params = null;
 
     private WebSocketSession session = null;
-
-    private final ResultManager wiNRResultManager = new WiNRResultManager();
 
     private int asyncCheck = 0;
 
@@ -152,7 +157,7 @@ public class WiNRKit {
         String imageNum = params.getNumOfImage();
 
         try {
-            PrintWriter printWriter = new PrintWriter(WiNRConfig.basicPath + "run.sh");
+            PrintWriter printWriter = new PrintWriter(wiNRConfig.getBasicPath() + "run.sh");
             String command = String.format(
                     "python main.py --netname %s --epsilon %s --dataset %s --num_image %s",
                     model, epsilon, dataset, imageNum);
@@ -166,7 +171,7 @@ public class WiNRKit {
         }
 
         ProcessBuilder processBuilder = new ProcessBuilder("./run.sh");
-        processBuilder.directory(new File(WiNRConfig.basicPath));
+        processBuilder.directory(new File(wiNRConfig.getBasicPath()));
         processBuilder.redirectErrorStream(true);
         try {
             Process process = processBuilder.start();
