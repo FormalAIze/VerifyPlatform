@@ -3,11 +3,9 @@ package lab.nnverify.platform.verifyplatform.controller;
 import lab.nnverify.platform.verifyplatform.models.ResponseEntity;
 import lab.nnverify.platform.verifyplatform.services.FileService;
 import lab.nnverify.platform.verifyplatform.verifykit.deepcert.DeepCertConfig;
-import lab.nnverify.platform.verifyplatform.verifykit.deepcert.DeepCertKit;
 import lab.nnverify.platform.verifyplatform.verifykit.winr.WiNRConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -119,6 +117,23 @@ public class FileController {
         ResponseEntity response = new ResponseEntity();
         String uuidFileName = fileService.generateUUidFilename(model);
         String destPath = wiNRConfig.getUploadModelFilepathWiNR() + uuidFileName;
+        if (fileService.saveFile(model, destPath)) {
+            response.setStatus(200);
+            response.getData().put("modelFilepath", uuidFileName);
+        } else {
+            response.setStatus(-510);
+            response.setMsg("save model failed");
+        }
+        return response;
+    }
+
+    @CrossOrigin(origins = "*")
+    @PostMapping("/deepcert/model")
+    @ResponseBody
+    public ResponseEntity deepcertModelUpload(@RequestParam("modelFile") MultipartFile model) {
+        ResponseEntity response = new ResponseEntity();
+        String uuidFileName = fileService.generateUUidFilename(model);
+        String destPath = deepCertConfig.getUploadModelFilepathDeepcert() + uuidFileName;
         if (fileService.saveFile(model, destPath)) {
             response.setStatus(200);
             response.getData().put("modelFilepath", uuidFileName);
