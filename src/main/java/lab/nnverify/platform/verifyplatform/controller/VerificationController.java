@@ -143,6 +143,7 @@ public class VerificationController {
             response.setMsg("no verify id provided");
             return response;
         }
+        // todo 验证图片和model是否存在
         // 保存用户上传的验证图片信息到数据库
         Map<String, String> testImageInfo = (Map<String, String>) params.get("testImageInfo");
         int successSaveCount = verificationService.saveTestImageOfVerification(verifyId, testImageInfo);

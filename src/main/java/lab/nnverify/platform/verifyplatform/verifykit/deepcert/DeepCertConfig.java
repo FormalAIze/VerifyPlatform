@@ -15,8 +15,8 @@ public class DeepCertConfig {
     private String basicPath ;
 
     @Value("${deepcert.file.upload.image}")
-    private String uploadImageFilepathDeepcert;
+    private String uploadImageFilepath;
 
     @Value("${deepcert.file.upload.model}")
-    private String uploadModelFilepathDeepcert;
+    private String uploadModelFilepath;
 }

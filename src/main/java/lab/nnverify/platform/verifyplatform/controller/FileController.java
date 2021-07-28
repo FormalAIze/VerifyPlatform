@@ -43,7 +43,18 @@ public class FileController {
     @GetMapping(value = "/winr/image/{filename}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
     @ResponseBody
     public byte[] wiNRFetchImage(@PathVariable String filename) throws Exception {
-        File file = new File(wiNRConfig.getUploadImageFilepathWiNR() + filename);
+        File file = new File(wiNRConfig.getUploadImageFilepath() + filename);
+        FileInputStream inputStream = new FileInputStream(file);
+        byte[] bytes = new byte[inputStream.available()];
+        inputStream.read(bytes, 0, inputStream.available());
+        return bytes;
+    }
+
+    @CrossOrigin(origins = "*")
+    @GetMapping(value = "/deepcert/image/{filename}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
+    @ResponseBody
+    public byte[] deepCertFetchImage(@PathVariable String filename) throws Exception {
+        File file = new File(deepCertConfig.getUploadImageFilepath() + filename);
         FileInputStream inputStream = new FileInputStream(file);
         byte[] bytes = new byte[inputStream.available()];
         inputStream.read(bytes, 0, inputStream.available());
@@ -65,7 +76,7 @@ public class FileController {
         }
         for (MultipartFile image : images) {
             String uuidFileName = fileService.generateUUidFilename(image);
-            String destPath = wiNRConfig.getUploadImageFilepathWiNR() + uuidFileName;
+            String destPath = wiNRConfig.getUploadImageFilepath() + uuidFileName;
             if (fileService.saveFile(image, destPath)) {
                 imageNames.add(uuidFileName);
                 successCount++;
@@ -95,7 +106,7 @@ public class FileController {
         }
         for (MultipartFile image : images) {
             String uuidFileName = fileService.generateUUidFilename(image);
-            String destPath = deepCertConfig.getUploadImageFilepathDeepcert() + uuidFileName;
+            String destPath = deepCertConfig.getUploadImageFilepath() + uuidFileName;
             if (fileService.saveFile(image, destPath)) {
                 imageNames.add(uuidFileName);
                 successCount++;
@@ -116,10 +127,10 @@ public class FileController {
     public ResponseEntity wiNRModelUpload(@RequestParam("modelFile") MultipartFile model) {
         ResponseEntity response = new ResponseEntity();
         String uuidFileName = fileService.generateUUidFilename(model);
-        String destPath = wiNRConfig.getUploadModelFilepathWiNR() + uuidFileName;
+        String destPath = wiNRConfig.getUploadModelFilepath() + uuidFileName;
         if (fileService.saveFile(model, destPath)) {
             response.setStatus(200);
-            response.getData().put("modelFilepath", uuidFileName);
+            response.getData().put("modelFilename", uuidFileName);
         } else {
             response.setStatus(-510);
             response.setMsg("save model failed");
@@ -133,10 +144,10 @@ public class FileController {
     public ResponseEntity deepcertModelUpload(@RequestParam("modelFile") MultipartFile model) {
         ResponseEntity response = new ResponseEntity();
         String uuidFileName = fileService.generateUUidFilename(model);
-        String destPath = deepCertConfig.getUploadModelFilepathDeepcert() + uuidFileName;
+        String destPath = deepCertConfig.getUploadModelFilepath() + uuidFileName;
         if (fileService.saveFile(model, destPath)) {
             response.setStatus(200);
-            response.getData().put("modelFilepath", uuidFileName);
+            response.getData().put("modelFilename", uuidFileName);
         } else {
             response.setStatus(-510);
             response.setMsg("save model failed");

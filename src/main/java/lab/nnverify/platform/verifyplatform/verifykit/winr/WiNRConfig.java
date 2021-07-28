@@ -12,10 +12,10 @@ import org.springframework.stereotype.Component;
 @NoArgsConstructor
 public class WiNRConfig {
     @Value(("${winr.file.upload.model}"))
-    private String uploadModelFilepathWiNR;
+    private String uploadModelFilepath;
 
     @Value("${winr.file.upload.image}")
-    private String uploadImageFilepathWiNR;
+    private String uploadImageFilepath;
 
     @Value("${winr.basicPath}")
     private String basicPath;
