@@ -20,4 +20,6 @@ public class WiNRConfig {
     @Value("${winr.basicPath}")
     private String basicPath;
 
+    @Value("${winr.imageinfo.json.file}")
+    private String jsonPath;
 }

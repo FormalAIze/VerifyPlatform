@@ -108,6 +108,7 @@ public class VerificationController {
             response.setMsg("no verify id provided");
             return response;
         }
+        // todo winr那边ok了之后 这边搞个一样的
         DeepCertVerification verificationParams = new DeepCertVerification(verifyId, userId, "DeepCert", (String) params.get("netName"),
                 (String) params.get("numOfImage"), (String) params.get("norm"), (String) params.get("core"), (String) params.get("activation"),
                 (String) params.get("isCifar"), (String) params.get("isTinyImageNet"), "ready", getNowTimestamp());
@@ -146,6 +147,11 @@ public class VerificationController {
         // todo 验证图片和model是否存在
         // 保存用户上传的验证图片信息到数据库
         Map<String, String> testImageInfo = (Map<String, String>) params.get("testImageInfo");
+        String imageInfoJsonFile = verificationService.saveTestImageInfo2Json(verifyId, testImageInfo, "WiNR");
+        if (imageInfoJsonFile.isBlank()) {
+            response.setStatus(420);
+            response.setMsg("image info json file save fail");
+        }
         int successSaveCount = verificationService.saveTestImageOfVerification(verifyId, testImageInfo);
         log.info("verification test images saved. " + successSaveCount + "/" + testImageInfo.keySet().size());
         // todo model信息也需要存到数据库，可能也需要修改

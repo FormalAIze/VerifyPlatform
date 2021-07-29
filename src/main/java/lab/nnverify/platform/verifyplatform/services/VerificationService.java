@@ -1,20 +1,67 @@
 package lab.nnverify.platform.verifyplatform.services;
 
+import com.alibaba.fastjson.JSON;
 import lab.nnverify.platform.verifyplatform.mapper.VerificationMapper;
 import lab.nnverify.platform.verifyplatform.models.AllParamsVerification;
 import lab.nnverify.platform.verifyplatform.models.DeepCertVerification;
 import lab.nnverify.platform.verifyplatform.models.WiNRVerification;
+import lab.nnverify.platform.verifyplatform.verifykit.deepcert.DeepCertConfig;
+import lab.nnverify.platform.verifyplatform.verifykit.winr.WiNRConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class VerificationService {
     @Autowired
     VerificationMapper verificationMapper;
+
+    @Autowired
+    DeepCertConfig deepCertConfig;
+
+    @Autowired
+    WiNRConfig wiNRConfig;
+
+    public String saveTestImageInfo2Json(String verifyId, Map<String, String> testImageInfo, String tool) {
+        HashMap<String, String> testImageInfoWithPath = new HashMap<>();
+        if (tool.equalsIgnoreCase("winr")) {
+            for (String filename : testImageInfo.keySet()) {
+                testImageInfoWithPath.put(wiNRConfig.getUploadImageFilepath() + filename, testImageInfo.get(filename));
+            }
+            return saveTestImageInfo2JsonInner(verifyId, testImageInfoWithPath);
+        } else if (tool.equalsIgnoreCase("deepcert")) {
+            for (String filename : testImageInfo.keySet()) {
+                testImageInfoWithPath.put(deepCertConfig.getUploadImageFilepath() + filename, testImageInfo.get(filename));
+            }
+            return saveTestImageInfo2JsonInner(verifyId, testImageInfoWithPath);
+        }
+        return "";
+    }
+
+    private String saveTestImageInfo2JsonInner(String verifyId, Map<String, String> testImageInfo) {
+        String json = JSON.toJSONString(testImageInfo);
+        String jsonFilepath = wiNRConfig.getJsonPath() + verifyId;
+        try {
+            BufferedWriter out = new BufferedWriter(new FileWriter(jsonFilepath));
+            out.write(json);
+            out.close();
+            log.info("write json file success, filepath: " + jsonFilepath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            log.error("write json file failed, filepath: " + jsonFilepath);
+        }
+        return jsonFilepath;
+    }
 
     public int saveTestImageOfVerification(String verifyId, Map<String, String> testImageInfo) {
         int successCount = 0;
