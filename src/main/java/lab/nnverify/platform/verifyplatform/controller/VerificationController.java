@@ -103,7 +103,7 @@ public class VerificationController {
             log.info(key + ": " + params.get(key).toString());
         }
         String verifyId = (String) params.get("verifyId");
-        if (verifyId == null) {
+        if (verifyId == null || verifyId.isBlank()) {
             response.setStatus(410);
             response.setMsg("no verify id provided");
             return response;
