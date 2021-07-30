@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
@@ -15,7 +16,7 @@ public class DeepCertVerification {
     private String tool;
 
     private String netName;
-    private String numOfImage;
+    private Map<String, String> testImageInfo;
     private String norm;
     private String core;
     private String activation;

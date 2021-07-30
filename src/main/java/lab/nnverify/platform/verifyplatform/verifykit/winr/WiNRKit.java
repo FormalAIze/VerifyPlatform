@@ -45,6 +45,8 @@ public class WiNRKit {
 
     private int asyncCheck = 0;
 
+    // todo 添加出现错误时不运行task的能力
+
     public WiNRKit() {
     }
 
@@ -63,6 +65,9 @@ public class WiNRKit {
             } else {
                 log.error("fail to write verification record to database");
             }
+            // 验证的测试图片信息存入数据库
+            int successSaveCount = verificationService.saveTestImageOfVerification(params.getVerifyId(), params.getTestImageInfo());
+            log.info("verification test images saved into database. " + successSaveCount + "/" + params.getTestImageInfo().keySet().size());
             log.info("the async check value is: " + asyncCheck);
         }
 
@@ -130,10 +135,6 @@ public class WiNRKit {
 
     public int testAsync() {
         session = WebSocketSessionManager.getSession(String.valueOf(params.getUserId()));
-        // 参数检查不通过，不执行验证任务，目前这个函数还没写
-        if (!paramsCheck()) {
-            return -400;
-        }
         // 没有获取到websocket session，完成执行之后无法通知浏览器端，目前先直接返回错误
         if (session == null) {
             return -100;
@@ -146,15 +147,12 @@ public class WiNRKit {
         return 1;
     }
 
-    private boolean paramsCheck() {
-        return true;
-    }
-
     private void task() {
         String dataset = params.getDataset();
         String epsilon = params.getEpsilon();
         String model = params.getNetName();
-        String imageNum = params.getNumOfImage();
+        // TODO 修改为真实数据
+        String imageNum = "2";
 
         try {
             PrintWriter printWriter = new PrintWriter(wiNRConfig.getBasicPath() + "run.sh");

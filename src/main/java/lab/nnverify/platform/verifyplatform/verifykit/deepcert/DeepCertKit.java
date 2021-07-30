@@ -58,6 +58,9 @@ public class DeepCertKit {
             } else {
                 log.error("fail to write verification record to database");
             }
+            // 测试照片信息存入数据库
+            int successSaveCount = verificationService.saveTestImageOfVerification(params.getVerifyId(), params.getTestImageInfo());
+            log.info("verification test images saved. " + successSaveCount + "/" + params.getTestImageInfo().keySet().size());
             log.info("the async check value is: " + asyncCheck);
         }
 
@@ -123,10 +126,6 @@ public class DeepCertKit {
 
     public int testAsync() {
         session = WebSocketSessionManager.getSession(String.valueOf(params.getUserId()));
-        // 参数检查不通过，不执行验证任务，目前这个函数还没写
-        if (!paramsCheck()) {
-            return -400;
-        }
         // 没有获取到websocket session，完成执行之后无法通知浏览器端，目前先直接返回错误
         if (session == null) {
             return -100;
@@ -142,7 +141,8 @@ public class DeepCertKit {
     private void task() {
         String netName = params.getNetName();
         String core = params.getCore();
-        String numOfImage = params.getNumOfImage();
+        // todo 改回真实数据
+        String numOfImage = "2";
         String norm = params.getNorm();
         String activation = params.getActivation();
         String isCifar = params.getIsCifar();
@@ -196,10 +196,6 @@ public class DeepCertKit {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private boolean paramsCheck() {
-        return true;
     }
 
 }

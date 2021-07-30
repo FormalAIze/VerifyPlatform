@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
@@ -17,7 +18,7 @@ public class WiNRVerification {
     private String epsilon;
     private String netName;
     private String dataset;
-    private String numOfImage;
+    private Map<String, String> testImageInfo;
 
     // 四种状态: ready, running, success, error
     private String status;

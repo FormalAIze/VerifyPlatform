@@ -1,5 +1,7 @@
 package lab.nnverify.platform.verifyplatform.controller;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import lab.nnverify.platform.verifyplatform.models.DeepCertVerification;
 import lab.nnverify.platform.verifyplatform.models.ResponseEntity;
 import lab.nnverify.platform.verifyplatform.models.WiNRVerification;
@@ -99,21 +101,43 @@ public class VerificationController {
     @PostMapping("/verify/deepcert/{userId}")
     public ResponseEntity verifyAsyncDeepCert(@PathVariable Integer userId, @RequestParam Map<String, Object> params) {
         ResponseEntity response = new ResponseEntity();
-        for (String key : params.keySet()) {
-            log.info(key + ": " + params.get(key).toString());
-        }
         String verifyId = (String) params.get("verifyId");
+        String testImageInfoJson = (String) params.get("testImageInfoJson");
+        Map<String, String> testImageInfo = JSON.parseObject(testImageInfoJson, new TypeReference<>() {
+        });
+        DeepCertVerification verificationParams = new DeepCertVerification(verifyId, userId, "DeepCert", (String) params.get("netName"),
+                testImageInfo, (String) params.get("norm"), (String) params.get("core"), (String) params.get("activation"),
+                (String) params.get("isCifar"), (String) params.get("isTinyImageNet"), "ready", getNowTimestamp());
+        // 检查参数
+        if (!verificationService.paramsCheckDeepcert(verificationParams)) {
+            response.setStatus(430);
+            response.setMsg("params check failed, something wrong with params");
+            return response;
+        }
+        // 检查verifyId
         if (verifyId == null || verifyId.isBlank()) {
             response.setStatus(410);
             response.setMsg("no verify id provided");
             return response;
         }
-        // todo winr那边ok了之后 这边搞个一样的
-        DeepCertVerification verificationParams = new DeepCertVerification(verifyId, userId, "DeepCert", (String) params.get("netName"),
-                (String) params.get("numOfImage"), (String) params.get("norm"), (String) params.get("core"), (String) params.get("activation"),
-                (String) params.get("isCifar"), (String) params.get("isTinyImageNet"), "ready", getNowTimestamp());
+        // 检查图片和模型是否存在
+        if (!verificationService.isModelAndTestImageExist(verificationParams.getNetName(), verificationParams.getTestImageInfo().keySet())) {
+            response.setStatus(440);
+            response.setMsg("no such model or image");
+            return response;
+        }
+        // 将图片和模型转换为json文件 准备传递给工具
+        // todo 在完成了task内中断后放进deepcertKit的listener中
+        String imageInfoJsonFile = verificationService.saveTestImageInfo2Json(verifyId, testImageInfo, "deepcert");
+        log.info("json filepath is: " + imageInfoJsonFile);
+        if (imageInfoJsonFile.isBlank()) {
+            response.setStatus(420);
+            response.setMsg("image info json file save fail");
+        }
+        // todo 需要修改以配合工具
         deepCertKit.setParams(verificationParams);
-        int status = deepCertKit.testAsync();
+//        int status = deepCertKit.testAsync();
+        int status = 1;
         if (status == -100) {
             log.error("no web socket session for verify: " + verificationParams.getVerifyId());
             response.setMsg("no web socket session for verify: " + verificationParams.getVerifyId());
@@ -133,34 +157,44 @@ public class VerificationController {
     @ResponseBody
     @CrossOrigin(origins = "*")
     @PostMapping("/verify/winr/{userId}")
-    public ResponseEntity verifyAsyncWiNR(@PathVariable Integer userId, @RequestParam Map<String, Object> params) throws IOException {
+    public ResponseEntity verifyAsyncWiNR(@PathVariable Integer userId, @RequestParam Map<String, Object> params) {
         ResponseEntity response = new ResponseEntity();
-        for (String key : params.keySet()) {
-            log.info(key + ": " + params.get(key).toString());
-        }
         String verifyId = (String) params.get("verifyId");
+        String testImageInfoJson = (String) params.get("testImageInfoJson");
+        Map<String, String> testImageInfo = JSON.parseObject(testImageInfoJson, new TypeReference<>() {
+        });
+        WiNRVerification verificationParams = new WiNRVerification(verifyId, userId, "WiNR", (String) params.get("epsilon"),
+                (String) params.get("model"), (String) params.get("dataset"), testImageInfo, "ready", getNowTimestamp());
+        // 检查参数
+        if (!verificationService.paramsCheckWiNR(verificationParams)) {
+            response.setStatus(430);
+            response.setMsg("params check failed, something wrong with params");
+            return response;
+        }
+        // 检查verifyId
         if (verifyId == null || verifyId.isBlank()) {
             response.setStatus(410);
             response.setMsg("no verify id provided");
             return response;
         }
-        // todo 验证图片和model是否存在
-        // 保存用户上传的验证图片信息到数据库
-        Map<String, String> testImageInfo = (Map<String, String>) params.get("testImageInfo");
+        // 检查图片和模型是否存在
+        if (!verificationService.isModelAndTestImageExist(verificationParams.getNetName(), verificationParams.getTestImageInfo().keySet())) {
+            response.setStatus(440);
+            response.setMsg("no such model or image");
+            return response;
+        }
+        // 将图片和模型转换为json文件 准备传递给工具
+        // todo 在完成了task内中断后放进winrKit的listener中
         String imageInfoJsonFile = verificationService.saveTestImageInfo2Json(verifyId, testImageInfo, "WiNR");
+        log.info("json filepath is: " + imageInfoJsonFile);
         if (imageInfoJsonFile.isBlank()) {
             response.setStatus(420);
             response.setMsg("image info json file save fail");
         }
-        int successSaveCount = verificationService.saveTestImageOfVerification(verifyId, testImageInfo);
-        log.info("verification test images saved. " + successSaveCount + "/" + testImageInfo.keySet().size());
-        // todo model信息也需要存到数据库，可能也需要修改
         // todo 需要修改以配合工具
-        WiNRVerification verificationParams = new WiNRVerification(verifyId, userId, "WiNR", (String) params.get("epsilon"),
-                (String) params.get("model"), (String) params.get("dataset"), (String) params.get("imageNum"),
-                "ready", getNowTimestamp());
         wiNRKit.setParams(verificationParams);
-        int status = wiNRKit.testAsync();
+//        int status = wiNRKit.testAsync();
+        int status = 1;
         if (status == -100) {
             log.error("no web socket session for verify: " + verificationParams.getVerifyId());
             response.setMsg("no web socket session for verify: " + verificationParams.getVerifyId());

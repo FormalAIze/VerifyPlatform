@@ -19,6 +19,7 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -31,6 +32,49 @@ public class VerificationService {
 
     @Autowired
     WiNRConfig wiNRConfig;
+
+    public boolean isModelAndTestImageExist(String model, Set<String> testImages) {
+        String modelPath = wiNRConfig.getUploadModelFilepath() + model;
+        log.info("modelPath: " + modelPath);
+        File modelFile = new File(modelPath);
+        if (!modelFile.exists()) {
+            return false;
+        }
+        for (String testImage : testImages) {
+            String testImagePath = wiNRConfig.getUploadImageFilepath() + testImage;
+            log.info("testImagePath: " + testImagePath);
+            File file = new File(testImagePath);
+            if (!file.exists()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean paramsCheckWiNR(WiNRVerification verification) {
+        String dataset = verification.getDataset();
+        String epsilon = verification.getEpsilon();
+        String model = verification.getNetName();
+        Map<String, String> testImageInfo = verification.getTestImageInfo();
+        return !dataset.isBlank() && !epsilon.isBlank() && !model.isBlank() && !(testImageInfo == null || testImageInfo.keySet().size() == 0);
+    }
+
+    public boolean paramsCheckDeepcert(DeepCertVerification verification) {
+        String netName = verification.getNetName();
+        String core = verification.getCore();
+        Map<String, String> testImageInfo = verification.getTestImageInfo();
+        String norm = verification.getNorm();
+        String activation = verification.getActivation();
+        String isCifar = verification.getIsCifar();
+        String isTinyImageNet = verification.getIsTinyImageNet();
+        return !netName.isBlank() &&
+                !core.isBlank() &&
+                !(testImageInfo == null || testImageInfo.keySet().size() == 0) &&
+                !norm.isBlank() &&
+                !activation.isBlank() &&
+                !isCifar.isBlank() &&
+                !isTinyImageNet.isBlank();
+    }
 
     public String saveTestImageInfo2Json(String verifyId, Map<String, String> testImageInfo, String tool) {
         HashMap<String, String> testImageInfoWithPath = new HashMap<>();
@@ -49,8 +93,8 @@ public class VerificationService {
     }
 
     private String saveTestImageInfo2JsonInner(String verifyId, Map<String, String> testImageInfo) {
-        String json = JSON.toJSONString(testImageInfo);
-        String jsonFilepath = wiNRConfig.getJsonPath() + verifyId;
+        String json = JSON.toJSONString(testImageInfo) + "\n";
+        String jsonFilepath = wiNRConfig.getJsonPath() + verifyId + ".json";
         try {
             BufferedWriter out = new BufferedWriter(new FileWriter(jsonFilepath));
             out.write(json);
@@ -63,6 +107,7 @@ public class VerificationService {
         return jsonFilepath;
     }
 
+    // 与验证工具无关
     public int saveTestImageOfVerification(String verifyId, Map<String, String> testImageInfo) {
         int successCount = 0;
         for (String filename : testImageInfo.keySet()) {
