@@ -56,7 +56,12 @@ public class VerificationService {
         String epsilon = verification.getEpsilon();
         String model = verification.getNetName();
         Map<String, String> testImageInfo = verification.getTestImageInfo();
-        return !dataset.isBlank() && !epsilon.isBlank() && !model.isBlank() && !(testImageInfo == null || testImageInfo.keySet().size() == 0);
+        String pureConv = verification.getPureConv();
+        return !dataset.isBlank() &&
+                !epsilon.isBlank() &&
+                !model.isBlank() &&
+                !(testImageInfo == null || testImageInfo.keySet().size() == 0) &&
+                !pureConv.isBlank();
     }
 
     public boolean paramsCheckDeepcert(DeepCertVerification verification) {
@@ -77,22 +82,28 @@ public class VerificationService {
     }
 
     public String saveTestImageInfo2Json(String verifyId, Map<String, String> testImageInfo, String tool) {
-        HashMap<String, String> testImageInfoWithPath = new HashMap<>();
+        HashMap<String, Map<String, Object>> testImageInfoWithPath = new HashMap<>();
         if (tool.equalsIgnoreCase("winr")) {
+            // convert to a json format that winr tool accept
+            int i = 0;
             for (String filename : testImageInfo.keySet()) {
-                testImageInfoWithPath.put(wiNRConfig.getUploadImageFilepath() + filename, testImageInfo.get(filename));
+                HashMap<String, Object> map = new HashMap<>();
+                map.put("path", wiNRConfig.getUploadImageFilepath() + filename);
+                map.put("label", Integer.valueOf(testImageInfo.get(filename)));
+                testImageInfoWithPath.put("img_" + i++, map);
             }
             return saveTestImageInfo2JsonInner(verifyId, testImageInfoWithPath);
         } else if (tool.equalsIgnoreCase("deepcert")) {
-            for (String filename : testImageInfo.keySet()) {
-                testImageInfoWithPath.put(deepCertConfig.getUploadImageFilepath() + filename, testImageInfo.get(filename));
-            }
-            return saveTestImageInfo2JsonInner(verifyId, testImageInfoWithPath);
+            log.info("pass deepcert save json procedure");
+//            for (String filename : testImageInfo.keySet()) {
+//                testImageInfoWithPath.put(deepCertConfig.getUploadImageFilepath() + filename, testImageInfo.get(filename));
+//            }
+//            return saveTestImageInfo2JsonInner(verifyId, testImageInfoWithPath);
         }
         return "";
     }
 
-    private String saveTestImageInfo2JsonInner(String verifyId, Map<String, String> testImageInfo) {
+    private String saveTestImageInfo2JsonInner(String verifyId, Map<String, Map<String, Object>> testImageInfo) {
         String json = JSON.toJSONString(testImageInfo) + "\n";
         String jsonFilepath = wiNRConfig.getJsonPath() + verifyId + ".json";
         try {

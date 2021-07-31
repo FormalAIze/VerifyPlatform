@@ -164,7 +164,7 @@ public class VerificationController {
         Map<String, String> testImageInfo = JSON.parseObject(testImageInfoJson, new TypeReference<>() {
         });
         WiNRVerification verificationParams = new WiNRVerification(verifyId, userId, "WiNR", (String) params.get("epsilon"),
-                (String) params.get("model"), (String) params.get("dataset"), testImageInfo, "ready", getNowTimestamp());
+                (String) params.get("model"), (String) params.get("dataset"), testImageInfo, null, "True", "ready", getNowTimestamp());
         // 检查参数
         if (!verificationService.paramsCheckWiNR(verificationParams)) {
             response.setStatus(430);
@@ -190,11 +190,11 @@ public class VerificationController {
         if (imageInfoJsonFile.isBlank()) {
             response.setStatus(420);
             response.setMsg("image info json file save fail");
+            return response;
         }
-        // todo 需要修改以配合工具
+        verificationParams.setJsonPath(imageInfoJsonFile);
         wiNRKit.setParams(verificationParams);
-//        int status = wiNRKit.testAsync();
-        int status = 1;
+        int status = wiNRKit.testAsync();
         if (status == -100) {
             log.error("no web socket session for verify: " + verificationParams.getVerifyId());
             response.setMsg("no web socket session for verify: " + verificationParams.getVerifyId());

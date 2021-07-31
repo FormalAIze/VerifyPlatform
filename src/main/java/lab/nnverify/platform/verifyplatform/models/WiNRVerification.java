@@ -19,6 +19,8 @@ public class WiNRVerification {
     private String netName;
     private String dataset;
     private Map<String, String> testImageInfo;
+    private String jsonPath;
+    private String pureConv;
 
     // 四种状态: ready, running, success, error
     private String status;

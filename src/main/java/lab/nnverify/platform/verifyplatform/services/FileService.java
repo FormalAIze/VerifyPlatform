@@ -14,6 +14,9 @@ public class FileService {
     public boolean saveFile(MultipartFile file, String path) {
         log.info("the save path is: " + path);
         File dest = new File(path);
+        if (dest.exists()) {
+            return true;
+        }
         if (!dest.getParentFile().exists()) {
             if (!dest.getParentFile().mkdirs()) {
                 log.error("mkdirs files, path: " + path);

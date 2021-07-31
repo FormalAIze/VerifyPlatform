@@ -126,11 +126,10 @@ public class FileController {
     @ResponseBody
     public ResponseEntity wiNRModelUpload(@RequestParam("modelFile") MultipartFile model) {
         ResponseEntity response = new ResponseEntity();
-        String uuidFileName = fileService.generateUUidFilename(model);
-        String destPath = wiNRConfig.getUploadModelFilepath() + uuidFileName;
+        String destPath = wiNRConfig.getUploadModelFilepath() + model.getOriginalFilename();
         if (fileService.saveFile(model, destPath)) {
             response.setStatus(200);
-            response.getData().put("modelFilename", uuidFileName);
+            response.getData().put("modelFilename", model.getOriginalFilename());
         } else {
             response.setStatus(-510);
             response.setMsg("save model failed");

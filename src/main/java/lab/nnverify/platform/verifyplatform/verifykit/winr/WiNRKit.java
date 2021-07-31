@@ -86,14 +86,18 @@ public class WiNRKit {
             if (runStatus == 0) {
                 verificationService.finishVerificationUpdateStatus(verifyId, "success");
                 try {
-                    session.sendMessage(new TextMessage("verify success. verifyId:" + verifyId));
+                    if (session != null) {
+                        session.sendMessage(new TextMessage("verify success. verifyId:" + verifyId));
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             } else {
                 verificationService.finishVerificationUpdateStatus(verifyId, "error");
                 try {
-                    session.sendMessage(new TextMessage("verify failed. verifyId:" + verifyId));
+                    if (session != null) {
+                        session.sendMessage(new TextMessage("verify failed. verifyId:" + verifyId));
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -136,9 +140,9 @@ public class WiNRKit {
     public int testAsync() {
         session = WebSocketSessionManager.getSession(String.valueOf(params.getUserId()));
         // 没有获取到websocket session，完成执行之后无法通知浏览器端，目前先直接返回错误
-        if (session == null) {
-            return -100;
-        }
+//        if (session == null) {
+//            return -100;
+//        }
         new Thread(() -> {
             taskExecuteListener.beforeTaskExecute();
             task();
@@ -150,15 +154,16 @@ public class WiNRKit {
     private void task() {
         String dataset = params.getDataset();
         String epsilon = params.getEpsilon();
-        String model = params.getNetName();
-        // TODO 修改为真实数据
-        String imageNum = "2";
+        String model = wiNRConfig.getUploadModelFilepath() + params.getNetName();
+        String imageNum = String.valueOf(params.getTestImageInfo().keySet().size());
+        String jsonPath = params.getJsonPath();
+        String pureConv = params.getPureConv();
 
         try {
             PrintWriter printWriter = new PrintWriter(wiNRConfig.getBasicPath() + "run.sh");
             String command = String.format(
-                    "python main.py --netname %s --epsilon %s --dataset %s --num_image %s",
-                    model, epsilon, dataset, imageNum);
+                    "python main.py --dataset %s --netname %s --pure_conv %s --num_image %s --json_path %s --epsilon %s --verifyId %s",
+                    dataset, model, pureConv, imageNum, jsonPath, epsilon, params.getVerifyId());
             log.info("the command is " + command);
             printWriter.write(command);
             printWriter.flush();
