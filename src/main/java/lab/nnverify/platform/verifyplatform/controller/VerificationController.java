@@ -52,7 +52,7 @@ public class VerificationController {
     @GetMapping("/verify/verification")
     public ResponseEntity fetchVerificationResult(@RequestParam String verifyId) throws IOException {
         String tool = verificationService.fetchVerificationTool(verifyId);
-        Map<String, String> result;
+        Map<String, Map<String, String>> result;
         ResponseEntity response = new ResponseEntity();
         switch (tool) {
             case "WiNR": {
@@ -64,9 +64,10 @@ public class VerificationController {
                     response.setStatus(200);
                     response.setMsg("verification successfully end");
                     response.getData().put("result", result);
-                    int image_num = Integer.parseInt(result.get("unrobust_number")) * 2;
-                    List<String> advExamples = wiNRKit.getAdvExample(image_num);
+                    List<String> advExamples = wiNRKit.getAdvExample();
                     response.getData().put("advExamples", advExamples);
+                    List<String> originImages = wiNRKit.getOriginImages();
+                    response.getData().put("originImages", originImages);
                 } else {
                     response.setStatus(-500);
                     response.setMsg("verification failed");
@@ -107,7 +108,7 @@ public class VerificationController {
         });
         DeepCertVerification verificationParams = new DeepCertVerification(verifyId, userId, "DeepCert", (String) params.get("netName"),
                 testImageInfo, (String) params.get("norm"), (String) params.get("core"), (String) params.get("activation"),
-                (String) params.get("isCifar"), (String) params.get("isTinyImageNet"), "ready", getNowTimestamp());
+                (String) params.get("isCifar"), (String) params.get("isTinyImageNet"), null, "ready", getNowTimestamp());
         // 检查参数
         if (!verificationService.paramsCheckDeepcert(verificationParams)) {
             response.setStatus(430);
@@ -126,18 +127,18 @@ public class VerificationController {
             response.setMsg("no such model or image");
             return response;
         }
-        // 将图片和模型转换为json文件 准备传递给工具
+        // 将图片和模型转换为json文件 准备传递给工具 并将图片拷贝到工具的目录下
         // todo 在完成了task内中断后放进deepcertKit的listener中
         String imageInfoJsonFile = verificationService.saveTestImageInfo2Json(verifyId, testImageInfo, "deepcert");
         log.info("json filepath is: " + imageInfoJsonFile);
         if (imageInfoJsonFile.isBlank()) {
             response.setStatus(420);
             response.setMsg("image info json file save fail");
+            return response;
         }
-        // todo 需要修改以配合工具
+        verificationParams.setJsonPath(imageInfoJsonFile);
         deepCertKit.setParams(verificationParams);
-//        int status = deepCertKit.testAsync();
-        int status = 1;
+        int status = deepCertKit.testAsync();
         if (status == -100) {
             log.error("no web socket session for verify: " + verificationParams.getVerifyId());
             response.setMsg("no web socket session for verify: " + verificationParams.getVerifyId());

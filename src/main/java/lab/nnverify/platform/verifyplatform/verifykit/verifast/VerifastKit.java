@@ -36,12 +36,12 @@ public class VerifastKit {
     };
 
     private void sendResultFile() throws IOException {
-        InputStreamReader file = resultManager.getResultFile("1");
-        BufferedReader reader = new BufferedReader(file);
-        String line;
-        while ((line = reader.readLine()) != null) {
-            session.sendMessage(new TextMessage("resultFile---" + line));
-        }
+//        InputStreamReader file = resultManager.getResultFiles("1");
+//        BufferedReader reader = new BufferedReader(file);
+//        String line;
+//        while ((line = reader.readLine()) != null) {
+//            session.sendMessage(new TextMessage("resultFile---" + line));
+//        }
     }
 
     public int testWithMIPVerifyMock(String userId) {

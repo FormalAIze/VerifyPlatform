@@ -15,28 +15,38 @@ public class VerifastResultManager extends ResultManager {
     private String resultFilepathMock = "./mock.txt";
 
     @Override
-    public String getLogPath() {
+    public String getLogPath(String verifyId) {
         return null;
     }
 
     @Override
-    public String getAdvExamplePath() {
+    public String getAdvExamplePath(String verifyId) {
         return null;
     }
 
     @Override
-    public InputStreamReader getResultFile(String verifyId) {
-        try {
-            return new InputStreamReader(new FileInputStream(resultFilepathMock));
-        } catch (FileNotFoundException e) {
-            log.error("file not found, filepath: " + resultFilepathMock);
-            e.printStackTrace();
-        }
+    public String getOriginImagePath(String verifyId) {
         return null;
     }
 
     @Override
-    public List<String> getAdvExample(String verifyId, int image_num) {
+    public List<InputStreamReader> getResultFiles(String verifyId) {
+//        try {
+//            return new InputStreamReader(new FileInputStream(resultFilepathMock));
+//        } catch (FileNotFoundException e) {
+//            log.error("file not found, filepath: " + resultFilepathMock);
+//            e.printStackTrace();
+//        }
+        return null;
+    }
+
+    @Override
+    public List<String> getAdvExample(String verifyId) {
+        return null;
+    }
+
+    @Override
+    public List<String> getOriginImages(String verifyId) {
         return null;
     }
 }

@@ -15,6 +15,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
@@ -82,8 +83,8 @@ public class VerificationService {
     }
 
     public String saveTestImageInfo2Json(String verifyId, Map<String, String> testImageInfo, String tool) {
-        HashMap<String, Map<String, Object>> testImageInfoWithPath = new HashMap<>();
         if (tool.equalsIgnoreCase("winr")) {
+            HashMap<String, Map<String, Object>> testImageInfoWithPath = new HashMap<>();
             // convert to a json format that winr tool accept
             int i = 0;
             for (String filename : testImageInfo.keySet()) {
@@ -92,20 +93,43 @@ public class VerificationService {
                 map.put("label", Integer.valueOf(testImageInfo.get(filename)));
                 testImageInfoWithPath.put("img_" + i++, map);
             }
-            return saveTestImageInfo2JsonInner(verifyId, testImageInfoWithPath);
+            String json = JSON.toJSONString(testImageInfoWithPath) + "\n";
+            String jsonFilepath = wiNRConfig.getJsonPath() + verifyId + ".json";
+            return saveTestImageInfo2JsonInner(json, jsonFilepath);
         } else if (tool.equalsIgnoreCase("deepcert")) {
-            log.info("pass deepcert save json procedure");
-//            for (String filename : testImageInfo.keySet()) {
-//                testImageInfoWithPath.put(deepCertConfig.getUploadImageFilepath() + filename, testImageInfo.get(filename));
-//            }
-//            return saveTestImageInfo2JsonInner(verifyId, testImageInfoWithPath);
+            HashMap<String, String> testImageInfoWithPath = new HashMap<>();
+            int i = 1;
+            // save file to another directory and rename
+            for (String filename : testImageInfo.keySet()) {
+                // copy file
+                String filepath = deepCertConfig.getUploadImageFilepath() + filename;
+                String label = testImageInfo.get(filename);
+                int idx = filename.lastIndexOf(".");
+                String extension = filename.substring(idx);
+                String dest = deepCertConfig.getOriginImageBasePath() + verifyId + "/" + i + extension;
+                File originFile = new File(filepath);
+                File destFile = new File(dest);
+                try {
+                    Files.copy(originFile.toPath(), destFile.toPath());
+                    testImageInfoWithPath.put(dest, label);
+                    i++;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    log.error("file copy failed: " + originFile + " -> " + destFile);
+                }
+            }
+            String json = JSON.toJSONString(testImageInfoWithPath) + "\n";
+            String jsonFilepath = deepCertConfig.getJsonPath() + verifyId + ".json";
+            if (i == 0) { // all files fail to copy to dest path
+                return "";
+            } else {
+                return saveTestImageInfo2JsonInner(json, jsonFilepath);
+            }
         }
         return "";
     }
 
-    private String saveTestImageInfo2JsonInner(String verifyId, Map<String, Map<String, Object>> testImageInfo) {
-        String json = JSON.toJSONString(testImageInfo) + "\n";
-        String jsonFilepath = wiNRConfig.getJsonPath() + verifyId + ".json";
+    private String saveTestImageInfo2JsonInner(String json, String jsonFilepath) {
         try {
             BufferedWriter out = new BufferedWriter(new FileWriter(jsonFilepath));
             out.write(json);

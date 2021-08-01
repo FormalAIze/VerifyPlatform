@@ -74,15 +74,8 @@ public class WiNRKit {
         @Override
         public void afterTaskExecute() {
             log.info("-----afterWiNRTaskExecute-----");
-            // 创建一个锚点 方便之后通过verify_id查找文件
             String verifyId = params.getVerifyId();
             log.info("verify id after task: " + verifyId);
-            if (!wiNRResultManager.createResultFileAnchor(verifyId)) {
-                log.error("anchor create failed: result file anchor create failed, verifyId is " + verifyId);
-            }
-            if (!wiNRResultManager.createAdvExampleAnchor(verifyId)) {
-                log.error("anchor create failed: advExample file anchor create failed, verifyId is " + verifyId);
-            }
             if (runStatus == 0) {
                 verificationService.finishVerificationUpdateStatus(verifyId, "success");
                 try {
@@ -105,36 +98,45 @@ public class WiNRKit {
         }
     };
 
-    public Map<String, String> getResultSync() throws IOException {
+    public Map<String, Map<String, String>> getResultSync() throws IOException {
         String verifyId = params.getVerifyId();
+        HashMap<String, Map<String, String>> map = new HashMap<>();
         if (!params.getStatus().equals("success")) {
-            return new HashMap<>();
+            return map;
         }
-        InputStreamReader file = wiNRResultManager.getResultFile(verifyId);
-        if (file == null) {
-            return new HashMap<>();
+        List<InputStreamReader> files = wiNRResultManager.getResultFiles(verifyId);
+        if (files.size() == 0) {
+            return map;
         }
-        BufferedReader reader = new BufferedReader(file);
-        String line;
-        ArrayList<String> result = new ArrayList<>();
-        while ((line = reader.readLine()) != null) {
-            result.add(line);
+        int i = 0;
+        for (InputStreamReader file : files) {
+            BufferedReader reader = new BufferedReader(file);
+            String line;
+            ArrayList<String> result = new ArrayList<>();
+            Map<String, String> innerMap = new HashMap<>();
+            while ((line = reader.readLine()) != null) {
+                result.add(line);
+            }
+            String[] split = result.get(result.size() - 2).split(",");
+            for (String s : split) {
+                String[] split1 = s.trim().split(":");
+                innerMap.put(split1[0].trim().replace(" ", "_"), split1[1].trim());
+            }
+            String[] split1 = result.get(result.size() - 1).split(":");
+            innerMap.put(split1[0].trim(), split1[1].trim());
+            map.put("image_" + i++, innerMap);
         }
-        String[] secondLastLine = result.get(result.size() - 2).split("\\s+");
-        String[] lastLine = result.get(result.size() - 1).split("\\s+");
-        HashMap<String, String> resultMap = new HashMap<>();
-        for (int i = 0; i < secondLastLine.length; i++) {
-            String key = secondLastLine[i];
-            resultMap.put(key, lastLine[i]);
-        }
-        return resultMap;
+        return map;
     }
 
-    public List<String> getAdvExample(int image_num) {
+    public List<String> getAdvExample() {
         String verifyId = params.getVerifyId();
+        return wiNRResultManager.getAdvExample(verifyId);
+    }
 
-        List<String> advExamples = wiNRResultManager.getAdvExample(verifyId, image_num);
-        return advExamples;
+    public List<String> getOriginImages() {
+        String verifyId = params.getVerifyId();
+        return wiNRResultManager.getOriginImages(verifyId);
     }
 
     public int testAsync() {
