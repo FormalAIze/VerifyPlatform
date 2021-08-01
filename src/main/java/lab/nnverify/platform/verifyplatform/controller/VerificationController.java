@@ -68,6 +68,7 @@ public class VerificationController {
                     response.getData().put("advExamples", advExamples);
                     List<String> originImages = wiNRKit.getOriginImages();
                     response.getData().put("originImages", originImages);
+                    response.getData().put("verificationDetail", verification);
                 } else {
                     response.setStatus(-500);
                     response.setMsg("verification failed");
@@ -85,6 +86,7 @@ public class VerificationController {
                     response.setStatus(200);
                     response.setMsg("verification successfully end");
                     response.getData().put("result", result);
+                    response.getData().put("verificationDetail", verification);
                 } else {
                     response.setStatus(-500);
                     response.setMsg("verification failed");
@@ -107,8 +109,8 @@ public class VerificationController {
         Map<String, String> testImageInfo = JSON.parseObject(testImageInfoJson, new TypeReference<>() {
         });
         DeepCertVerification verificationParams = new DeepCertVerification(verifyId, userId, "DeepCert", (String) params.get("netName"),
-                testImageInfo, (String) params.get("norm"), (String) params.get("core"), (String) params.get("activation"),
-                (String) params.get("isCifar"), (String) params.get("isTinyImageNet"), null, "ready", getNowTimestamp());
+                testImageInfo, (String) params.get("norm"), null, null,
+                null, null, null, "ready", getNowTimestamp());
         // 检查参数
         if (!verificationService.paramsCheckDeepcert(verificationParams)) {
             response.setStatus(430);
@@ -122,7 +124,7 @@ public class VerificationController {
             return response;
         }
         // 检查图片和模型是否存在
-        if (!verificationService.isModelAndTestImageExist(verificationParams.getNetName(), verificationParams.getTestImageInfo().keySet())) {
+        if (!verificationService.isModelAndTestImageExist(verificationParams.getNetName(), verificationParams.getTestImageInfo().keySet(), "deepcert")) {
             response.setStatus(440);
             response.setMsg("no such model or image");
             return response;
@@ -179,7 +181,7 @@ public class VerificationController {
             return response;
         }
         // 检查图片和模型是否存在
-        if (!verificationService.isModelAndTestImageExist(verificationParams.getNetName(), verificationParams.getTestImageInfo().keySet())) {
+        if (!verificationService.isModelAndTestImageExist(verificationParams.getNetName(), verificationParams.getTestImageInfo().keySet(), "winr")) {
             response.setStatus(440);
             response.setMsg("no such model or image");
             return response;

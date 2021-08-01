@@ -14,9 +14,12 @@ public class FileService {
     public boolean saveFile(MultipartFile file, String path) {
         log.info("the save path is: " + path);
         File dest = new File(path);
+        // 同名文件覆盖写 先删除
         if (dest.exists()) {
-            return true;
+            log.info("file exists, going to overwrite it");
+            dest.delete();
         }
+        dest = new File(path);
         if (!dest.getParentFile().exists()) {
             if (!dest.getParentFile().mkdirs()) {
                 log.error("mkdirs files, path: " + path);
@@ -40,7 +43,10 @@ public class FileService {
         }
         log.info("origin filename: " + filename);
         int idx = filename.lastIndexOf(".");
-        String extension = filename.substring(idx);
+        String extension = "";
+        if (idx >= 0) {
+            extension = filename.substring(idx);
+        }
         return UUID.randomUUID().toString().replace("-", "") + extension;
     }
 }

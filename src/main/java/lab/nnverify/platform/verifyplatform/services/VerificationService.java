@@ -15,6 +15,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.sql.Timestamp;
 import java.util.HashMap;
@@ -34,15 +35,25 @@ public class VerificationService {
     @Autowired
     WiNRConfig wiNRConfig;
 
-    public boolean isModelAndTestImageExist(String model, Set<String> testImages) {
-        String modelPath = wiNRConfig.getUploadModelFilepath() + model;
+    public boolean isModelAndTestImageExist(String model, Set<String> testImages, String tool) {
+        String modelPath;
+        if (tool.equalsIgnoreCase("winr")) {
+            modelPath = wiNRConfig.getUploadModelFilepath() + model;
+        } else {
+            modelPath = deepCertConfig.getUploadModelFilepath() + model;
+        }
         log.info("modelPath: " + modelPath);
         File modelFile = new File(modelPath);
         if (!modelFile.exists()) {
             return false;
         }
         for (String testImage : testImages) {
-            String testImagePath = wiNRConfig.getUploadImageFilepath() + testImage;
+            String testImagePath;
+            if (tool.equalsIgnoreCase("winr")) {
+                testImagePath = wiNRConfig.getUploadImageFilepath() + testImage;
+            } else {
+                testImagePath = deepCertConfig.getUploadImageFilepath() + testImage;
+            }
             log.info("testImagePath: " + testImagePath);
             File file = new File(testImagePath);
             if (!file.exists()) {
@@ -67,19 +78,11 @@ public class VerificationService {
 
     public boolean paramsCheckDeepcert(DeepCertVerification verification) {
         String netName = verification.getNetName();
-        String core = verification.getCore();
         Map<String, String> testImageInfo = verification.getTestImageInfo();
         String norm = verification.getNorm();
-        String activation = verification.getActivation();
-        String isCifar = verification.getIsCifar();
-        String isTinyImageNet = verification.getIsTinyImageNet();
         return !netName.isBlank() &&
-                !core.isBlank() &&
                 !(testImageInfo == null || testImageInfo.keySet().size() == 0) &&
-                !norm.isBlank() &&
-                !activation.isBlank() &&
-                !isCifar.isBlank() &&
-                !isTinyImageNet.isBlank();
+                !norm.isBlank();
     }
 
     public String saveTestImageInfo2Json(String verifyId, Map<String, String> testImageInfo, String tool) {
@@ -97,8 +100,8 @@ public class VerificationService {
             String jsonFilepath = wiNRConfig.getJsonPath() + verifyId + ".json";
             return saveTestImageInfo2JsonInner(json, jsonFilepath);
         } else if (tool.equalsIgnoreCase("deepcert")) {
-            HashMap<String, String> testImageInfoWithPath = new HashMap<>();
-            int i = 1;
+            HashMap<String, Integer> testImageInfoWithPath = new HashMap<>();
+            int i = 0;
             // save file to another directory and rename
             for (String filename : testImageInfo.keySet()) {
                 // copy file
@@ -106,12 +109,17 @@ public class VerificationService {
                 String label = testImageInfo.get(filename);
                 int idx = filename.lastIndexOf(".");
                 String extension = filename.substring(idx);
-                String dest = deepCertConfig.getOriginImageBasePath() + verifyId + "/" + i + extension;
+                String dest = deepCertConfig.getOriginImageBasePath() + verifyId + "/image_" + i + extension;
                 File originFile = new File(filepath);
                 File destFile = new File(dest);
+                if (!destFile.getParentFile().exists()) {
+                    if (!destFile.getParentFile().mkdirs()) {
+                        log.error("mkdirs files, path: " + destFile);
+                    }
+                }
                 try {
                     Files.copy(originFile.toPath(), destFile.toPath());
-                    testImageInfoWithPath.put(dest, label);
+                    testImageInfoWithPath.put(dest, Integer.valueOf(label));
                     i++;
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -130,6 +138,12 @@ public class VerificationService {
     }
 
     private String saveTestImageInfo2JsonInner(String json, String jsonFilepath) {
+        File jsonFile = new File(jsonFilepath);
+        if (!jsonFile.getParentFile().exists()) {
+            if (!jsonFile.getParentFile().mkdirs()) {
+                log.error("mkdirs files, path: " + jsonFilepath);
+            }
+        }
         try {
             BufferedWriter out = new BufferedWriter(new FileWriter(jsonFilepath));
             out.write(json);

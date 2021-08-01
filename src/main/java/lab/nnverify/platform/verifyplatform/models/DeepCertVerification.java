@@ -22,6 +22,7 @@ public class DeepCertVerification {
     private String activation;
     private String isCifar;
     private String isTinyImageNet;
+    private String jsonPath;
 
     // 四种状态: ready, running, success, error
     private String status;

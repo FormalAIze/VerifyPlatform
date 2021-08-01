@@ -40,7 +40,9 @@ abstract public class ResultManager {
         if (filenames.size() > 0) {
             for (String filename : filenames) {
                 try {
-                    readers.add(new InputStreamReader(new FileInputStream(getLogPath(verifyId) + filename)));
+                    if (filename.endsWith("txt")) {
+                        readers.add(new InputStreamReader(new FileInputStream(getLogPath(verifyId) + filename)));
+                    }
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                     log.error("log file load failed, filename: " + filename);
