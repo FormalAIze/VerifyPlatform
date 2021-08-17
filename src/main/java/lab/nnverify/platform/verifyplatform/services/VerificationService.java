@@ -168,10 +168,10 @@ public class VerificationService {
 
     public List<AllParamsVerification> findVerificationHistoryByUserId(Integer userId) {
         List<AllParamsVerification> verifications = verificationMapper.fetchVerificationByUserId(userId);
-        // 修改为东8区 不知道为什么数据库显示的时间是东8区时间 但是程序获取到的时间是UTC时间 手动加8小时
-        for (AllParamsVerification verification : verifications) {
-            verification.setStartTime(Timestamp.valueOf(verification.getStartTime().toLocalDateTime().plusHours(8)));
-        }
+//        // 修改为东8区 不知道为什么数据库显示的时间是东8区时间 但是程序获取到的时间是UTC时间 手动加8小时
+//        for (AllParamsVerification verification : verifications) {
+//            verification.setStartTime(Timestamp.valueOf(verification.getStartTime().toLocalDateTime().plusHours(8)));
+//        }
         return verifications;
     }
 
