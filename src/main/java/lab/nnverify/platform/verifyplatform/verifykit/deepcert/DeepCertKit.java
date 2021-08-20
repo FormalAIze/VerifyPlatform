@@ -129,11 +129,12 @@ public class DeepCertKit {
 
         for (String s : dataGen) {
             String[] split = s.split(",");
+            // use true_id as specifier
             dataGenMap.put(split[1].trim().split("=")[1].trim(), split);
         }
         for (String s : result) {
             String[] split = s.split(",");
-            resultMap.put(split[2].trim().split("=")[1].trim(), split);
+            resultMap.put(split[3].trim().split("=")[1].trim(), split);
         }
 
         for (String id : dataGenMap.keySet()) {
