@@ -119,7 +119,7 @@ public class DeepCertKit {
         while ((line = reader.readLine()) != null) {
             if (line.startsWith("[DATAGEN]")) {
                 dataGen.add(line);
-            } else {
+            } else if (line.startsWith("[L1]")) {
                 result.add(line);
             }
         }
@@ -151,8 +151,12 @@ public class DeepCertKit {
                 String[] split3 = split2[1].trim().split("/");
                 map1.put(split2[0].trim().substring(13).trim(), split3[split3.length - 1].trim());
                 map.put(id, map1);
-            } else {
-                map.put(id, new HashMap<>());
+            } else { // 没有分类成功的情况下 仅返回原图片
+                HashMap<String, String> map1 = new HashMap<>();
+                String[] split1 = split[0].trim().split("=");
+                String[] split2 = split1[1].trim().split("/");
+                map1.put(split1[0].trim().substring(13).trim(), split2[split2.length - 1].trim());
+                map.put(id, map1);
             }
         }
         return map;
