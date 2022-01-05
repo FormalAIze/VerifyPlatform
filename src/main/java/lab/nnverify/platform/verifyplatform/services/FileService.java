@@ -11,6 +11,11 @@ import java.util.UUID;
 @Service
 @Slf4j
 public class FileService {
+    public boolean isFileExisted(String path) {
+        File file = new File(path);
+        return file.exists();
+    }
+
     public boolean saveFile(MultipartFile file, String path) {
         log.info("the save path is: " + path);
         File dest = new File(path);
