@@ -22,4 +22,13 @@ public class WiNRConfig {
 
     @Value("${winr.imageinfo.json.file}")
     private String jsonPath;
+
+    @Value("${winr.result.image.origin}")
+    private String originImageBasePath;
+
+    @Value("${winr.result.image.adv}")
+    private String advImageBasePath;
+
+    @Value("${winr.result.log}")
+    private String logBasePath;
 }

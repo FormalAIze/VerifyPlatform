@@ -17,50 +17,27 @@ public class WiNRResultManager extends ResultManager {
     WiNRConfig wiNRConfig;
 
     @Override
-    public String getLogPath() {
-        return wiNRConfig.getBasicPath() + "logs/";
+    public String getLogPath(String verifyId) {
+        return wiNRConfig.getLogBasePath() + verifyId + "/";
     }
 
     @Override
-    public String getAdvExamplePath() {
-        return wiNRConfig.getBasicPath() + "adv_examples/";
+    public String getAdvExamplePath(String verifyId) {
+        return wiNRConfig.getAdvImageBasePath() + verifyId + "/";
     }
 
     @Override
-    public List<String> getAdvExample(String verifyId, int image_num) {
-        ProcessBuilder processBuilder = new ProcessBuilder("ls", "-at");
-        processBuilder.directory(new File(getAdvExamplePath()));
-        List<String> filenames = new ArrayList<>();
-        processBuilder.redirectErrorStream(true); // 需要把输出和错误流重定向 否则大量向缓冲区写入会导致死锁
-        try {
-            Process process = processBuilder.start();
-            BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            BufferedReader error = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-            String s;
-            // 根据verifyId生成的锚点选择log文件
-            while ((s = input.readLine()) != null) {
-                if (s.equals("verify_" + verifyId)) {
-                    break;
-                }
-            }
-            String line;
-            for (int i = 0; i < image_num && ((line = input.readLine()) != null); i++) {
-                filenames.add(line);
-                log.info("adv example #" + i + " filename: " + line);
-            }
-            try {
-                int runStatus = process.waitFor();
-                System.out.println(runStatus);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public String getOriginImagePath(String verifyId) {
+        return wiNRConfig.getOriginImageBasePath() + verifyId + "/";
+    }
 
-        for (String filename : filenames) {
-            log.info("image filename: " + filename);
-        }
-        return filenames;
+    @Override
+    public List<String> getAdvExample(String verifyId) {
+        return getImages(getAdvExamplePath(verifyId));
+    }
+
+    @Override
+    public List<String> getOriginImages(String verifyId) {
+        return getImages(getOriginImagePath(verifyId));
     }
 }

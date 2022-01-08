@@ -45,6 +45,8 @@ public class WiNRKit {
 
     private int asyncCheck = 0;
 
+    // todo 添加出现错误时不运行task的能力
+
     public WiNRKit() {
     }
 
@@ -63,32 +65,32 @@ public class WiNRKit {
             } else {
                 log.error("fail to write verification record to database");
             }
+            // 验证的测试图片信息存入数据库
+            int successSaveCount = verificationService.saveTestImageOfVerification(params.getVerifyId(), params.getTestImageInfo());
+            log.info("verification test images saved into database. " + successSaveCount + "/" + params.getTestImageInfo().keySet().size());
             log.info("the async check value is: " + asyncCheck);
         }
 
         @Override
         public void afterTaskExecute() {
             log.info("-----afterWiNRTaskExecute-----");
-            // 创建一个锚点 方便之后通过verify_id查找文件
             String verifyId = params.getVerifyId();
             log.info("verify id after task: " + verifyId);
-            if (!wiNRResultManager.createResultFileAnchor(verifyId)) {
-                log.error("anchor create failed: result file anchor create failed, verifyId is " + verifyId);
-            }
-            if (!wiNRResultManager.createAdvExampleAnchor(verifyId)) {
-                log.error("anchor create failed: advExample file anchor create failed, verifyId is " + verifyId);
-            }
             if (runStatus == 0) {
                 verificationService.finishVerificationUpdateStatus(verifyId, "success");
                 try {
-                    session.sendMessage(new TextMessage("verify success. verifyId:" + verifyId));
+                    if (session != null) {
+                        session.sendMessage(new TextMessage("verify success. verifyId:" + verifyId));
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             } else {
                 verificationService.finishVerificationUpdateStatus(verifyId, "error");
                 try {
-                    session.sendMessage(new TextMessage("verify failed. verifyId:" + verifyId));
+                    if (session != null) {
+                        session.sendMessage(new TextMessage("verify failed. verifyId:" + verifyId));
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -96,48 +98,53 @@ public class WiNRKit {
         }
     };
 
-    public Map<String, String> getResultSync() throws IOException {
+    public Map<String, Map<String, String>> getResultSync() throws IOException {
         String verifyId = params.getVerifyId();
+        HashMap<String, Map<String, String>> map = new HashMap<>();
         if (!params.getStatus().equals("success")) {
-            return new HashMap<>();
+            return map;
         }
-        InputStreamReader file = wiNRResultManager.getResultFile(verifyId);
-        if (file == null) {
-            return new HashMap<>();
+        List<InputStreamReader> files = wiNRResultManager.getResultFiles(verifyId);
+        if (files.size() == 0) {
+            return map;
         }
-        BufferedReader reader = new BufferedReader(file);
-        String line;
-        ArrayList<String> result = new ArrayList<>();
-        while ((line = reader.readLine()) != null) {
-            result.add(line);
+        int i = 0;
+        for (InputStreamReader file : files) {
+            BufferedReader reader = new BufferedReader(file);
+            String line;
+            ArrayList<String> result = new ArrayList<>();
+            Map<String, String> innerMap = new HashMap<>();
+            while ((line = reader.readLine()) != null) {
+                result.add(line);
+            }
+            String[] split = result.get(result.size() - 2).split(",");
+            for (String s : split) {
+                String[] split1 = s.trim().split(":");
+                innerMap.put(split1[0].trim().replace(" ", "_"), split1[1].trim());
+            }
+            String[] split1 = result.get(result.size() - 1).split(":");
+            innerMap.put(split1[0].trim(), split1[1].trim());
+            map.put("image_" + i++, innerMap);
         }
-        String[] secondLastLine = result.get(result.size() - 2).split("\\s+");
-        String[] lastLine = result.get(result.size() - 1).split("\\s+");
-        HashMap<String, String> resultMap = new HashMap<>();
-        for (int i = 0; i < secondLastLine.length; i++) {
-            String key = secondLastLine[i];
-            resultMap.put(key, lastLine[i]);
-        }
-        return resultMap;
+        return map;
     }
 
-    public List<String> getAdvExample(int image_num) {
+    public List<String> getAdvExample() {
         String verifyId = params.getVerifyId();
+        return wiNRResultManager.getAdvExample(verifyId);
+    }
 
-        List<String> advExamples = wiNRResultManager.getAdvExample(verifyId, image_num);
-        return advExamples;
+    public List<String> getOriginImages() {
+        String verifyId = params.getVerifyId();
+        return wiNRResultManager.getOriginImages(verifyId);
     }
 
     public int testAsync() {
         session = WebSocketSessionManager.getSession(String.valueOf(params.getUserId()));
-        // 参数检查不通过，不执行验证任务，目前这个函数还没写
-        if (!paramsCheck()) {
-            return -400;
-        }
         // 没有获取到websocket session，完成执行之后无法通知浏览器端，目前先直接返回错误
-        if (session == null) {
-            return -100;
-        }
+//        if (session == null) {
+//            return -100;
+//        }
         new Thread(() -> {
             taskExecuteListener.beforeTaskExecute();
             task();
@@ -146,21 +153,19 @@ public class WiNRKit {
         return 1;
     }
 
-    private boolean paramsCheck() {
-        return true;
-    }
-
     private void task() {
         String dataset = params.getDataset();
         String epsilon = params.getEpsilon();
-        String model = params.getNetName();
-        String imageNum = params.getNumOfImage();
+        String model = wiNRConfig.getUploadModelFilepath() + params.getNetName();
+        String imageNum = String.valueOf(params.getTestImageInfo().keySet().size());
+        String jsonPath = params.getJsonPath();
+        String pureConv = params.getPureConv();
 
         try {
             PrintWriter printWriter = new PrintWriter(wiNRConfig.getBasicPath() + "run.sh");
             String command = String.format(
-                    "python main.py --netname %s --epsilon %s --dataset %s --num_image %s",
-                    model, epsilon, dataset, imageNum);
+                    "python main.py --dataset %s --netname %s --pure_conv %s --num_image %s --json_path %s --epsilon %s --verifyId %s",
+                    dataset, model, pureConv, imageNum, jsonPath, epsilon, params.getVerifyId());
             log.info("the command is " + command);
             printWriter.write(command);
             printWriter.flush();

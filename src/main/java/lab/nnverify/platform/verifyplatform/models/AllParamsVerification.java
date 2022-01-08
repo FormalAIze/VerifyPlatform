@@ -20,7 +20,6 @@ public class AllParamsVerification {
     private String tool;
 
     private String netName;
-    private String numOfImage;
     private String norm;
     private String core;
     private String activation;

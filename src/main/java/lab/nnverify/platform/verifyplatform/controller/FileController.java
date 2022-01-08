@@ -28,10 +28,10 @@ public class FileController {
     DeepCertConfig deepCertConfig;
 
     @CrossOrigin(origins = "*")
-    @GetMapping(value = "/winr/adv_image/{filename}", produces = MediaType.IMAGE_PNG_VALUE)
+    @GetMapping(value = "/winr/adv_image/{filename}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
     @ResponseBody
-    public byte[] wiNRAdvExample(@PathVariable String filename) throws Exception {
-        String wiNRAdvPath = wiNRConfig.getBasicPath() + "adv_examples/";
+    public byte[] wiNRAdvExample(@PathVariable String filename, @RequestParam("verifyId") String verifyId) throws Exception {
+        String wiNRAdvPath = wiNRConfig.getAdvImageBasePath() + verifyId + "/";
         File file = new File(wiNRAdvPath + filename);
         FileInputStream inputStream = new FileInputStream(file);
         byte[] bytes = new byte[inputStream.available()];
@@ -40,7 +40,31 @@ public class FileController {
     }
 
     @CrossOrigin(origins = "*")
-    @GetMapping(value = "/winr/image/{filename}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
+    @GetMapping(value = "/winr/origin-image/{filename}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
+    @ResponseBody
+    public byte[] wiNROriginImage(@PathVariable String filename, @RequestParam("verifyId") String verifyId) throws Exception {
+        String wiNRAdvPath = wiNRConfig.getOriginImageBasePath() + verifyId + "/";
+        File file = new File(wiNRAdvPath + filename);
+        FileInputStream inputStream = new FileInputStream(file);
+        byte[] bytes = new byte[inputStream.available()];
+        inputStream.read(bytes, 0, inputStream.available());
+        return bytes;
+    }
+
+    @CrossOrigin(origins = "*")
+    @GetMapping(value = "/deepcert/origin-image/{filename}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
+    @ResponseBody
+    public byte[] deepcertOriginImage(@PathVariable String filename, @RequestParam("verifyId") String verifyId) throws Exception {
+        String wiNRAdvPath = deepCertConfig.getOriginImageBasePath() + verifyId + "/";
+        File file = new File(wiNRAdvPath + filename);
+        FileInputStream inputStream = new FileInputStream(file);
+        byte[] bytes = new byte[inputStream.available()];
+        inputStream.read(bytes, 0, inputStream.available());
+        return bytes;
+    }
+
+    @CrossOrigin(origins = "*")
+    @GetMapping(value = "/winr/image-preview/{filename}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
     @ResponseBody
     public byte[] wiNRFetchImage(@PathVariable String filename) throws Exception {
         File file = new File(wiNRConfig.getUploadImageFilepath() + filename);
@@ -51,7 +75,7 @@ public class FileController {
     }
 
     @CrossOrigin(origins = "*")
-    @GetMapping(value = "/deepcert/image/{filename}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
+    @GetMapping(value = "/deepcert/image-preview/{filename}", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE})
     @ResponseBody
     public byte[] deepCertFetchImage(@PathVariable String filename) throws Exception {
         File file = new File(deepCertConfig.getUploadImageFilepath() + filename);
@@ -126,11 +150,10 @@ public class FileController {
     @ResponseBody
     public ResponseEntity wiNRModelUpload(@RequestParam("modelFile") MultipartFile model) {
         ResponseEntity response = new ResponseEntity();
-        String uuidFileName = fileService.generateUUidFilename(model);
-        String destPath = wiNRConfig.getUploadModelFilepath() + uuidFileName;
+        String destPath = wiNRConfig.getUploadModelFilepath() + model.getOriginalFilename();
         if (fileService.saveFile(model, destPath)) {
             response.setStatus(200);
-            response.getData().put("modelFilename", uuidFileName);
+            response.getData().put("modelFilename", model.getOriginalFilename());
         } else {
             response.setStatus(-510);
             response.setMsg("save model failed");
@@ -143,11 +166,11 @@ public class FileController {
     @ResponseBody
     public ResponseEntity deepcertModelUpload(@RequestParam("modelFile") MultipartFile model) {
         ResponseEntity response = new ResponseEntity();
-        String uuidFileName = fileService.generateUUidFilename(model);
-        String destPath = deepCertConfig.getUploadModelFilepath() + uuidFileName;
+        String filename = model.getOriginalFilename();
+        String destPath = deepCertConfig.getUploadModelFilepath() + filename;
         if (fileService.saveFile(model, destPath)) {
             response.setStatus(200);
-            response.getData().put("modelFilename", uuidFileName);
+            response.getData().put("modelFilename", filename);
         } else {
             response.setStatus(-510);
             response.setMsg("save model failed");

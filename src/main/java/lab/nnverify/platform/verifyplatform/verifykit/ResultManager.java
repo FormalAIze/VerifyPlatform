@@ -8,27 +8,25 @@ import java.util.List;
 
 @Slf4j
 abstract public class ResultManager {
-    public abstract String getLogPath();
+    public abstract String getLogPath(String verifyId);
 
-    public abstract String getAdvExamplePath();
+    public abstract String getAdvExamplePath(String verifyId);
 
-    public InputStreamReader getResultFile(String verifyId) {
-        ProcessBuilder processBuilder = new ProcessBuilder("ls", "-at");
-        processBuilder.directory(new File(getLogPath()));
-        String filename = null;
+    public abstract String getOriginImagePath(String verifyId);
+
+    public List<InputStreamReader> getResultFiles(String verifyId) {
+        ProcessBuilder processBuilder = new ProcessBuilder("ls");
+        processBuilder.directory(new File(getLogPath(verifyId)));
+        List<String> filenames = new ArrayList<>();
         processBuilder.redirectErrorStream(true); // 需要把输出和错误流重定向 否则大量向缓冲区写入会导致死锁
         try {
             Process process = processBuilder.start();
             BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
             BufferedReader error = new BufferedReader(new InputStreamReader(process.getErrorStream()));
             String s;
-            // 根据verifyId生成的锚点选择log文件
             while ((s = input.readLine()) != null) {
-                if (s.equals("verify_" + verifyId)) {
-                    break;
-                }
+                filenames.add(s);
             }
-            filename = input.readLine();
             try {
                 int runStatus = process.waitFor();
                 System.out.println(runStatus);
@@ -38,27 +36,33 @@ abstract public class ResultManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (filename != null) {
-            try {
-                return new InputStreamReader(new FileInputStream(getLogPath() + filename));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
+        List<InputStreamReader> readers = new ArrayList<>();
+        if (filenames.size() > 0) {
+            for (String filename : filenames) {
+                try {
+                    if (filename.endsWith("txt")) {
+                        readers.add(new InputStreamReader(new FileInputStream(getLogPath(verifyId) + filename)));
+                    }
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                    log.error("log file load failed, filename: " + filename);
+                }
             }
         }
-        return null;
+        return readers;
     }
 
-    public List<String> getAdvExample(String verifyId, int image_num) {
+    public List<String> getAdvExample(String verifyId) {
         return new ArrayList<>();
     }
 
     public boolean createResultFileAnchor(String verifyId) {
-        String path = getLogPath();
+        String path = getLogPath(verifyId);
         return createAnchor(path, verifyId);
     }
 
     public boolean createAdvExampleAnchor(String verifyId) {
-        String path = getAdvExamplePath();
+        String path = getAdvExamplePath(verifyId);
         return createAnchor(path, verifyId);
     }
 
@@ -82,4 +86,33 @@ abstract public class ResultManager {
         return false;
     }
 
+    public abstract List<String> getOriginImages(String verifyId);
+
+    protected List<String> getImages(String path) {
+        ProcessBuilder processBuilder = new ProcessBuilder("ls");
+        processBuilder.directory(new File(path));
+        List<String> filenames = new ArrayList<>();
+        processBuilder.redirectErrorStream(true); // 需要把输出和错误流重定向 否则大量向缓冲区写入会导致死锁
+        try {
+            Process process = processBuilder.start();
+            BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader error = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            String s;
+            while ((s = input.readLine()) != null) {
+                filenames.add(s);
+            }
+            try {
+                int runStatus = process.waitFor();
+                log.info("run status: " + runStatus);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        for (String filename : filenames) {
+            log.info("image filename: " + filename);
+        }
+        return filenames;
+    }
 }

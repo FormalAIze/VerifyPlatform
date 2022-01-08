@@ -19,4 +19,13 @@ public class DeepCertConfig {
 
     @Value("${deepcert.file.upload.model}")
     private String uploadModelFilepath;
+
+    @Value("${deepcert.result.image.origin}")
+    private String originImageBasePath;
+
+    @Value("${deepcert.result.log}")
+    private String logBasePath;
+
+    @Value("${deepcert.imageinfo.json.file}")
+    private String jsonPath;
 }
